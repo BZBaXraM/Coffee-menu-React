@@ -21,5 +21,5 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Static assets produced by the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]

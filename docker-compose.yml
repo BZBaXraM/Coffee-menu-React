@@ -8,8 +8,5 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
-    # The nginx config proxies /api, /uploads and /ws to a "backend"
-    # service on port 3000. Uncomment depends_on once a backend service
-    # is defined in this compose file (or an external network).
-    # depends_on:
-    #   - backend
+    # Static React SPA only. The backend runs separately; the app reaches it
+    # directly via the VITE_API_BASE URL baked in at build time (see src/api.js).

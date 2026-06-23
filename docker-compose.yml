@@ -1,0 +1,15 @@
+services:
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: coffee-in-lab-client
+    container_name: coffee-client
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # The nginx config proxies /api, /uploads and /ws to a "backend"
+    # service on port 3000. Uncomment depends_on once a backend service
+    # is defined in this compose file (or an external network).
+    # depends_on:
+    #   - backend

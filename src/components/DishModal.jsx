@@ -32,6 +32,7 @@ export default function DishModal({ dish, icon, onClose }) {
           ) : (
             <span className="text-7xl">{icon || '☕'}</span>
           )}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <button
             onClick={onClose}
             className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-bg/80 text-ink"
@@ -48,11 +49,11 @@ export default function DishModal({ dish, icon, onClose }) {
           </div>
           {tl(dish.description) && <p className="text-sm text-muted">{tl(dish.description)}</p>}
 
-          <div className="flex flex-wrap gap-2 text-xs">
-            {dish.is_vegetarian ? <span className="rounded-full bg-emerald-600/10 px-2.5 py-1 font-medium text-emerald-700">🥬 {t.vegetarian}</span> : null}
-            {dish.is_vegan ? <span className="rounded-full bg-emerald-600/10 px-2.5 py-1 font-medium text-emerald-700">🌱 {t.vegan}</span> : null}
-            {dish.weight ? <span className="rounded-full bg-surface-2 px-2.5 py-1 font-medium text-muted">⚖️ {dish.weight} ml/g</span> : null}
-          </div>
+          {dish.weight ? (
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-surface-2 px-2.5 py-1 font-medium text-muted">⚖️ {dish.weight} ml/g</span>
+            </div>
+          ) : null}
 
           {ingList.length > 0 && (
             <div>

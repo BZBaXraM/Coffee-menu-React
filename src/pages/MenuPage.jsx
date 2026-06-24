@@ -6,7 +6,7 @@ import DishCard from '../components/DishCard.jsx';
 import DishModal from '../components/DishModal.jsx';
 import CartDrawer from '../components/CartDrawer.jsx';
 import AIChat from '../components/AIChat.jsx';
-import PromotionBanner from '../components/PromotionBanner.jsx';
+import ContactBar from '../components/ContactBar.jsx';
 import RestaurantInfo from '../components/RestaurantInfo.jsx';
 import Pagination from '../components/Pagination.jsx';
 import { API_URL } from '../api.js';
@@ -14,7 +14,6 @@ import { API_URL } from '../api.js';
 export default function MenuPage() {
   const { tl, t, settings } = useApp();
   const [categories, setCategories] = useState([]);
-  const [promotions, setPromotions] = useState([]);
   const [dishes, setDishes] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
@@ -27,7 +26,6 @@ export default function MenuPage() {
 
   useEffect(() => {
     fetch(`${API_URL}/menu/categories`).then((r) => r.json()).then(setCategories).catch(() => {});
-    fetch(`${API_URL}/menu/promotions`).then((r) => r.json()).then(setPromotions).catch(() => {});
   }, []);
 
   // debounce search
@@ -59,6 +57,27 @@ export default function MenuPage() {
     return (id) => map[id] || '☕';
   }, [categories]);
 
+  // Categories hidden from the menu (matched by their English name).
+  const hiddenCatIds = useMemo(() => {
+    const HIDDEN = ['Signature Drinks'];
+    const ids = new Set();
+    categories.forEach((c) => {
+      let en = '';
+      try { en = JSON.parse(c.name)?.en || ''; } catch { en = c.name || ''; }
+      if (HIDDEN.includes(en)) ids.add(c.id);
+    });
+    return ids;
+  }, [categories]);
+
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => !hiddenCatIds.has(c.id)),
+    [categories, hiddenCatIds],
+  );
+  const visibleDishes = useMemo(
+    () => dishes.filter((d) => !hiddenCatIds.has(d.category_id)),
+    [dishes, hiddenCatIds],
+  );
+
   return (
     <div className="min-h-screen bg-bg">
       <Navbar onCartOpen={() => setCartOpen(true)} onSearch={setSearch} search={search} />
@@ -71,14 +90,11 @@ export default function MenuPage() {
           </h1>
           <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted">{t.specialty}</p>
           <p className="mt-1 font-display text-sm italic text-accent">{t.tagline}</p>
+          <ContactBar />
         </section>
 
-        <div className="mb-5">
-          <PromotionBanner promotions={promotions} />
-        </div>
-
-        <div className="sticky top-[58px] z-20 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur">
-          <CategoryFilter categories={categories} active={activeCat} onChange={setActiveCat} />
+        <div id="menu" className="sticky top-[58px] z-20 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur">
+          <CategoryFilter categories={visibleCategories} active={activeCat} onChange={setActiveCat} />
         </div>
 
         {loading ? (
@@ -87,11 +103,11 @@ export default function MenuPage() {
               <div key={i} className="h-56 animate-pulse rounded-2xl border border-line bg-surface" />
             ))}
           </div>
-        ) : dishes.length === 0 ? (
+        ) : visibleDishes.length === 0 ? (
           <p className="py-16 text-center text-muted">{t.noResults}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3 lg:grid-cols-4">
-            {dishes.map((d) => (
+            {visibleDishes.map((d) => (
               <DishCard key={d.id} dish={d} icon={iconFor(d.category_id)} onOpen={setModalDish} />
             ))}
           </div>

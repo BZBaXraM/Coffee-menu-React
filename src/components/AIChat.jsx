@@ -47,13 +47,20 @@ export default function AIChat() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl text-accent-ink shadow-lg shadow-black/20 active:scale-95"
-        aria-label={t.askAI}
-      >
-        {open ? '✕' : '✨'}
-      </button>
+      <div className="group fixed bottom-5 right-5 z-40">
+        {!open && (
+          <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-bg opacity-0 shadow-lg transition group-hover:opacity-100">
+            {t.askAI}
+          </span>
+        )}
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl text-accent-ink shadow-lg shadow-black/20 active:scale-95"
+          aria-label={t.askAI}
+        >
+          {open ? '✕' : '✨'}
+        </button>
+      </div>
 
       {open && (
         <div className="fixed bottom-24 right-5 z-40 flex h-[28rem] w-[min(22rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">

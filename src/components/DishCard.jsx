@@ -26,13 +26,11 @@ export default function DishCard({ dish, icon, onOpen }) {
         ) : (
           <span className="absolute inset-0 grid place-items-center text-5xl opacity-80 transition group-hover:scale-110">{icon || '☕'}</span>
         )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         {dish.is_featured ? (
           <span className="absolute left-2 top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-ink">
             ★ {t.featured}
           </span>
-        ) : null}
-        {dish.is_vegan ? (
-          <span className="absolute right-2 top-2 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold text-white">🌱</span>
         ) : null}
       </div>
 

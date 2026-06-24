@@ -8,9 +8,9 @@ export default function RestaurantInfo() {
   const days = Object.entries(hours);
 
   return (
-    <footer className="mt-10 border-t border-line bg-surface">
+    <footer id="contact" className="mt-10 border-t border-line bg-surface">
       <div className="mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:grid-cols-3">
-        <div>
+        <div id="about">
           <div className="mb-2 flex items-center gap-2 font-display text-lg font-semibold text-ink">
             ☕ {tl(settings.restaurant_name) || 'Coffee In Lab'}
           </div>

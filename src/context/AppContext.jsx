@@ -27,7 +27,8 @@ export function tl(value, language = 'en') {
 
 export function AppProvider({ children }) {
   const [settings, setSettings] = useState({});
-  const [language, setLanguage] = useState(() => localStorage.getItem('qrmenu_lang') || 'en');
+  // v2 key: bumped so older cached language choices fall back to the new 'az' default.
+  const [language, setLanguage] = useState(() => localStorage.getItem('qrmenu_lang_v2') || 'az');
   const [currency, setCurrency] = useState(() => localStorage.getItem('qrmenu_currency') || 'AZN');
   const [theme, setTheme] = useState(() => localStorage.getItem('qrmenu_theme') || 'light');
 
@@ -38,9 +39,6 @@ export function AppProvider({ children }) {
       .then((r) => r.json())
       .then((s) => {
         setSettings(s);
-        if (s.primary_language && !localStorage.getItem('qrmenu_lang')) {
-          setLanguage(s.primary_language);
-        }
       })
       .catch(() => {});
   }, []);
@@ -58,7 +56,7 @@ export function AppProvider({ children }) {
     }
   }, [settings.accent_color]);
 
-  useEffect(() => { localStorage.setItem('qrmenu_lang', language); }, [language]);
+  useEffect(() => { localStorage.setItem('qrmenu_lang_v2', language); }, [language]);
   useEffect(() => { localStorage.setItem('qrmenu_currency', currency); }, [currency]);
 
   const toggleTheme = useCallback(() => {

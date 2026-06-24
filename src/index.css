@@ -38,6 +38,12 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* offset anchor targets so the sticky navbar doesn't cover them */
+#menu, #about, #contact {
+  scroll-margin-top: 120px;
 }
 
 body {

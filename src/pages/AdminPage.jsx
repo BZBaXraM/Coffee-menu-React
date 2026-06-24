@@ -193,14 +193,14 @@ function DishesTab({ headers }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { fetch(`${API_URL}/admin/categories`, { headers: headers() }).then((r) => r.json()).then(setCats); }, [headers]);
 
-  const blank = { name: { en: '' }, description: { en: '' }, ingredients: { en: '' }, price: '', category_id: cats[0]?.id || '', calories: '', weight: '', is_featured: 0, is_vegetarian: 0, is_vegan: 0, is_available: 1 };
+  const blank = { name: { en: '' }, description: { en: '' }, ingredients: { en: '' }, price: '', category_id: cats[0]?.id || '', calories: '', weight: '', is_featured: 0, is_available: 1 };
 
   const save = async (form, file) => {
     const fd = new FormData();
     fd.append('name', JSON.stringify(form.name));
     fd.append('description', JSON.stringify(form.description));
     fd.append('ingredients', JSON.stringify(form.ingredients));
-    ['price', 'category_id', 'calories', 'weight', 'is_featured', 'is_vegetarian', 'is_vegan', 'is_available'].forEach((k) => fd.append(k, form[k] ?? ''));
+    ['price', 'category_id', 'calories', 'weight', 'is_featured', 'is_available'].forEach((k) => fd.append(k, form[k] ?? ''));
     // new upload wins; otherwise send the current path (empty string = remove existing photo)
     if (file) fd.append('image', file);
     else fd.append('image', form.image ?? '');
@@ -272,7 +272,7 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
           <Field label="Weight (ml/g)" type="number" value={form.weight || ''} onChange={(e) => set('weight', e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-4 text-sm text-ink">
-          {[['is_featured', 'Featured ★'], ['is_vegetarian', 'Vegetarian'], ['is_vegan', 'Vegan'], ['is_available', 'Available']].map(([k, lbl]) => (
+          {[['is_featured', 'Featured ★'], ['is_available', 'Available']].map(([k, lbl]) => (
             <label key={k} className="flex items-center gap-2">
               <input type="checkbox" checked={!!Number(form[k])} onChange={(e) => set(k, e.target.checked ? 1 : 0)} /> {lbl}
             </label>

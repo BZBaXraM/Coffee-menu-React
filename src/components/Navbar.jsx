@@ -22,6 +22,12 @@ export default function Navbar({ onCartOpen, onSearch, search }) {
           </div>
         </div>
 
+        <nav className="hidden items-center gap-5 text-sm font-medium text-muted md:flex">
+          <a href="#menu" className="transition hover:text-accent">{t.menu}</a>
+          <a href="#about" className="transition hover:text-accent">{t.about}</a>
+          <a href="#contact" className="transition hover:text-accent">{t.contact}</a>
+        </nav>
+
         <div className="flex items-center gap-1.5">
           {showLang && (
             <select
@@ -70,7 +76,7 @@ export default function Navbar({ onCartOpen, onSearch, search }) {
       </div>
 
       {onSearch && (
-        <div className="mx-auto max-w-5xl px-4 pb-3">
+        <div className="mx-auto max-w-md px-4 pb-3">
           <input
             value={search}
             onChange={(e) => onSearch(e.target.value)}

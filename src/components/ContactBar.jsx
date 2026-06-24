@@ -106,7 +106,7 @@ export default function ContactBar() {
       </div>
 
       {popover === 'wifi' && (
-        <div className="absolute top-full z-20 mt-2 w-56 rounded-2xl border border-line bg-surface p-4 text-left shadow-xl">
+        <div className="absolute left-1/2 top-full z-30 mt-2 w-56 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl border border-line bg-surface p-4 text-left shadow-xl">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t.wifi}</h3>
           <p className="text-sm text-ink">{settings.wifi_name}</p>
           {settings.wifi_password && (
@@ -116,7 +116,7 @@ export default function ContactBar() {
       )}
 
       {popover === 'hours' && (
-        <div className="absolute top-full z-20 mt-2 w-64 rounded-2xl border border-line bg-surface p-4 text-left shadow-xl">
+        <div className="absolute left-1/2 top-full z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl border border-line bg-surface p-4 text-left shadow-xl">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t.hours}</h3>
           <ul className="space-y-1 text-sm text-ink">
             {days.map(([day, time]) => (

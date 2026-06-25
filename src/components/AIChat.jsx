@@ -17,8 +17,8 @@ export default function AIChat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
-  const send = async () => {
-    const text = input.trim();
+  const send = async (override) => {
+    const text = (override ?? input).trim();
     if (!text || loading) return;
     setInput('');
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
@@ -49,13 +49,14 @@ export default function AIChat() {
     <>
       <div className="group fixed bottom-5 right-5 z-40">
         {!open && (
-          <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-bg opacity-0 shadow-lg transition group-hover:opacity-100">
-            {t.askAI}
+          <span className="pointer-events-none absolute right-full top-1/2 mr-3 flex -translate-y-1/2 flex-col whitespace-nowrap rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-right text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+            <span className="text-xs font-semibold leading-tight">{t.askAI}</span>
+            <span className="text-[10px] leading-tight text-white/70">{t.aiSubtitle}</span>
           </span>
         )}
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl text-accent-ink shadow-lg shadow-black/20 active:scale-95"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-2xl text-white shadow-lg shadow-black/20 active:scale-95"
           aria-label={t.askAI}
         >
           {open ? '✕' : '✨'}
@@ -64,10 +65,38 @@ export default function AIChat() {
 
       {open && (
         <div className="fixed bottom-24 right-5 z-40 flex h-[28rem] w-[min(22rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
-          <div className="flex items-center gap-2 border-b border-line bg-surface-2 px-4 py-3">
-            <span className="text-xl">✨</span>
-            <div className="font-display font-semibold text-ink">{t.askAI}</div>
+          <div className="flex items-center gap-3 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-white">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-xl">✨</span>
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="font-display font-semibold">{t.askAI}</div>
+              <div className="truncate text-xs text-white/70">{t.aiSubtitle}</div>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label={t.close}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/15 text-sm text-white transition hover:bg-white/25"
+            >
+              ✕
+            </button>
           </div>
+
+          {messages.length === 0 && (
+            <div className="border-b border-line px-3 pt-3">
+              <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{t.quickSelect}</div>
+              <div className="flex flex-wrap gap-2 pb-3">
+                {t.quickChips.map((c) => (
+                  <button
+                    key={c.label}
+                    onClick={() => send(`${c.emoji} ${c.label}`)}
+                    className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink shadow-sm transition hover:border-accent hover:bg-surface-2 active:scale-95"
+                  >
+                    <span>{c.emoji}</span>
+                    <span>{c.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3">
             {messages.length === 0 && (
@@ -116,7 +145,7 @@ export default function AIChat() {
               placeholder={t.aiPlaceholder}
               className="flex-1 rounded-xl border border-line bg-bg px-3 py-2 text-sm text-ink placeholder:text-muted outline-none focus:border-accent"
             />
-            <button onClick={send} disabled={loading} className="rounded-xl bg-accent px-4 text-sm font-semibold text-accent-ink disabled:opacity-50">
+            <button onClick={() => send()} disabled={loading} className="rounded-xl bg-accent px-4 text-sm font-semibold text-accent-ink disabled:opacity-50">
               {t.send}
             </button>
           </div>

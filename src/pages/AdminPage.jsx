@@ -193,7 +193,7 @@ function DishesTab({ headers }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { fetch(`${API_URL}/admin/categories`, { headers: headers() }).then((r) => r.json()).then(setCats); }, [headers]);
 
-  const blank = { name: { en: '' }, description: { en: '' }, ingredients: { en: '' }, price: '', category_id: cats[0]?.id || '', calories: '', weight: '', is_featured: 0, is_available: 1 };
+  const blank = { name: { en: '' }, description: { en: '' }, ingredients: { en: '' }, price: '', category_id: cats[0]?.id || '', calories: '', weight: '', sizes: '[]', is_featured: 0, is_available: 1 };
 
   const save = async (form, file) => {
     const fd = new FormData();
@@ -201,6 +201,13 @@ function DishesTab({ headers }) {
     fd.append('description', JSON.stringify(form.description));
     fd.append('ingredients', JSON.stringify(form.ingredients));
     ['price', 'category_id', 'calories', 'weight', 'is_featured', 'is_available'].forEach((k) => fd.append(k, form[k] ?? ''));
+    // Normalize sizes: drop blank rows and coerce prices to numbers.
+    let sizes = [];
+    try { sizes = JSON.parse(form.sizes || '[]'); } catch { /* ignore */ }
+    sizes = (Array.isArray(sizes) ? sizes : [])
+      .map((s) => ({ label: String(s.label || '').trim(), price: Number(s.price) }))
+      .filter((s) => s.label && Number.isFinite(s.price));
+    fd.append('sizes', JSON.stringify(sizes));
     // new upload wins; otherwise send the current path (empty string = remove existing photo)
     if (file) fd.append('image', file);
     else fd.append('image', form.image ?? '');
@@ -249,6 +256,23 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
   const [file, setFile] = useState(null);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Size variants (e.g. milkshake S/M). Stored on the dish as a JSON string.
+  const [sizes, setSizes] = useState(() => {
+    try {
+      const arr = JSON.parse(initial.sizes || '[]');
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  });
+  const syncSizes = (arr) => {
+    setSizes(arr);
+    set('sizes', JSON.stringify(arr));
+  };
+  const updateSize = (i, key, val) => syncSizes(sizes.map((s, idx) => (idx === i ? { ...s, [key]: val } : s)));
+  const addSize = () => syncSizes([...sizes, { label: '', price: '' }]);
+  const removeSize = (i) => syncSizes(sizes.filter((_, idx) => idx !== i));
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onCancel}>
       <form
@@ -270,6 +294,39 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
           </label>
           <Field label="Calories" type="number" value={form.calories || ''} onChange={(e) => set('calories', e.target.value)} />
           <Field label="Weight (ml/g)" type="number" value={form.weight || ''} onChange={(e) => set('weight', e.target.value)} />
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Sizes (optional)</label>
+            <button type="button" onClick={addSize} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">+ Add size</button>
+          </div>
+          {sizes.length === 0 ? (
+            <p className="text-xs text-muted">No sizes — the single price above is used. Add e.g. S / M for milkshakes.</p>
+          ) : (
+            <div className="space-y-2">
+              {sizes.map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    value={s.label}
+                    onChange={(e) => updateSize(i, 'label', e.target.value)}
+                    placeholder="Label (S, M…)"
+                    className="w-1/2 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+                  />
+                  <input
+                    type="number"
+                    step="0.25"
+                    value={s.price}
+                    onChange={(e) => updateSize(i, 'price', e.target.value)}
+                    placeholder="Price (AZN)"
+                    className="w-1/2 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+                  />
+                  <button type="button" onClick={() => removeSize(i)} className="shrink-0 rounded-lg border border-line px-2 py-2 text-xs text-red-500">✕</button>
+                </div>
+              ))}
+              <p className="text-[11px] text-muted">Tip: keep the “Price (AZN)” field equal to the smallest size — it’s shown on cards and used as a fallback.</p>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap gap-4 text-sm text-ink">
           {[['is_featured', 'Featured ★'], ['is_available', 'Available']].map(([k, lbl]) => (

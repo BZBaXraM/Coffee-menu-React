@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { API_URL } from '../api.js';
+import { API_URL, dishSizes } from '../api.js';
 
 export default function AIChat() {
   const { language, tl, formatPrice, t } = useApp();
@@ -40,7 +40,8 @@ export default function AIChat() {
   };
 
   const quickAdd = (d) => {
-    add(d);
+    // Default to the smallest size variant when the dish has sizes.
+    add(d, 1, dishSizes(d)[0] || null);
     setAddedId(d.id);
     setTimeout(() => setAddedId(null), 1500);
   };

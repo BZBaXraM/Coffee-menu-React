@@ -1,15 +1,21 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { assetUrl } from '../api.js';
+import { assetUrl, dishSizes } from '../api.js';
 
 export default function DishCard({ dish, icon, onOpen }) {
   const { tl, formatPrice, t } = useApp();
   const { add } = useCart();
   const [justAdded, setJustAdded] = useState(false);
+  const sizes = dishSizes(dish);
 
   const handleAdd = (e) => {
     e.stopPropagation();
+    // With size variants, let the customer pick a size in the modal.
+    if (sizes.length > 0) {
+      onOpen(dish);
+      return;
+    }
     add(dish);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1500);
@@ -42,7 +48,10 @@ export default function DishCard({ dish, icon, onOpen }) {
         <h3 className="font-display text-base font-semibold leading-tight text-ink">{tl(dish.name)}</h3>
         <p className="line-clamp-2 flex-1 text-xs text-muted">{tl(dish.description)}</p>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="font-display text-lg font-bold text-accent">{formatPrice(dish.price)}</span>
+          <span className="font-display text-lg font-bold text-accent">
+            {formatPrice(sizes.length > 0 ? Math.min(...sizes.map((s) => s.price)) : dish.price)}
+            {sizes.length > 0 ? <span className="ml-1 text-[10px] font-medium text-muted">{sizes.map((s) => s.label).join('/')}</span> : null}
+          </span>
           <button
             onClick={handleAdd}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${

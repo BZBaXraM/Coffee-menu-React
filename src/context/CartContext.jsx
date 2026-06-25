@@ -5,10 +5,16 @@ export const useCart = () => useContext(CartContext);
 
 const KEY = 'qrmenu_cart';
 
+// Unique cart-line key: a dish with a chosen size is a distinct line from the
+// same dish in another size, so S and M live as two rows.
+const lineKey = (id, size) => (size ? `${id}::${size}` : String(id));
+
 function readCart() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(raw) ? raw : [];
+    if (!Array.isArray(raw)) return [];
+    // Backfill `key` for carts persisted before size variants existed.
+    return raw.map((i) => ({ ...i, key: i.key || lineKey(i.id, i.size) }));
   } catch {
     return [];
   }
@@ -21,21 +27,24 @@ export function CartProvider({ children }) {
     try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* ignore */ }
   }, [items]);
 
-  const add = (dish, qty = 1) => {
+  // `size` is an optional { label, price } variant (e.g. milkshake S/M).
+  const add = (dish, qty = 1, size = null) => {
+    const key = lineKey(dish.id, size?.label);
+    const price = size ? size.price : dish.price;
     setItems((prev) => {
-      const found = prev.find((i) => i.id === dish.id);
+      const found = prev.find((i) => i.key === key);
       if (found) {
-        return prev.map((i) => (i.id === dish.id ? { ...i, qty: i.qty + qty } : i));
+        return prev.map((i) => (i.key === key ? { ...i, qty: i.qty + qty } : i));
       }
-      return [...prev, { ...dish, qty }];
+      return [...prev, { ...dish, key, size: size?.label || null, price, qty }];
     });
   };
 
-  const remove = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
+  const remove = (key) => setItems((prev) => prev.filter((i) => i.key !== key));
 
-  const updateQty = (id, qty) => {
-    if (qty <= 0) return remove(id);
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, qty } : i)));
+  const updateQty = (key, qty) => {
+    if (qty <= 0) return remove(key);
+    setItems((prev) => prev.map((i) => (i.key === key ? { ...i, qty } : i)));
   };
 
   const clear = () => setItems([]);

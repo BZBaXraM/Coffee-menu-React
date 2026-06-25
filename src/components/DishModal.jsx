@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { assetUrl } from '../api.js';
+import { assetUrl, dishSizes } from '../api.js';
 
 export default function DishModal({ dish, icon, onClose }) {
   const { tl, formatPrice, t } = useApp();
   const { add } = useCart();
+  const sizes = dishSizes(dish);
+  const [size, setSize] = useState(sizes[0] || null);
   if (!dish) return null;
+
+  const price = size ? size.price : dish.price;
 
   const ingredients = tl(dish.ingredients);
   const ingList = Array.isArray(ingredients) ? ingredients : [];
@@ -44,9 +49,31 @@ export default function DishModal({ dish, icon, onClose }) {
         <div className="space-y-4 p-5">
           <div className="flex items-start justify-between gap-3">
             <h2 className="font-display text-2xl font-bold text-ink">{tl(dish.name)}</h2>
-            <span className="whitespace-nowrap font-display text-xl font-bold text-accent">{formatPrice(dish.price)}</span>
+            <span className="whitespace-nowrap font-display text-xl font-bold text-accent">{formatPrice(price)}</span>
           </div>
           {tl(dish.description) && <p className="text-sm text-muted">{tl(dish.description)}</p>}
+
+          {sizes.length > 0 && (
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t.size}</h3>
+              <div className="flex flex-wrap gap-2">
+                {sizes.map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    onClick={() => setSize(s)}
+                    className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                      size?.label === s.label
+                        ? 'border-accent bg-accent text-accent-ink'
+                        : 'border-line bg-bg text-ink hover:border-accent'
+                    }`}
+                  >
+                    {s.label} · {formatPrice(s.price)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {dish.weight ? (
             <div className="flex flex-wrap gap-2 text-xs">
@@ -80,10 +107,10 @@ export default function DishModal({ dish, icon, onClose }) {
           )}
 
           <button
-            onClick={() => { add(dish); onClose(); }}
+            onClick={() => { add(dish, 1, size); onClose(); }}
             className="w-full rounded-xl bg-accent py-3 font-semibold text-accent-ink active:scale-[0.99]"
           >
-            + {t.add} · {formatPrice(dish.price)}
+            + {t.add} · {formatPrice(price)}
           </button>
         </div>
       </div>

@@ -13,6 +13,19 @@ export function assetUrl(path) {
   return `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
+// Parse a dish's `sizes` column (JSON array of { label, price } in AZN) into a
+// clean array. Returns [] when the dish has no size variants — callers then fall
+// back to the plain `price` field.
+export function dishSizes(dish) {
+  if (!dish || dish.sizes == null) return [];
+  try {
+    const arr = typeof dish.sizes === 'string' ? JSON.parse(dish.sizes) : dish.sizes;
+    return Array.isArray(arr) ? arr.filter((s) => s && s.label != null && s.price != null) : [];
+  } catch {
+    return [];
+  }
+}
+
 // WebSocket endpoint on the API host.
 export function wsUrl(path = '/ws') {
   const url = new URL(API_BASE);

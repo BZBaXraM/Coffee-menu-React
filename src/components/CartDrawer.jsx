@@ -14,7 +14,7 @@ export default function CartDrawer({ open, onClose }) {
 
   const submitOrder = async () => {
     if (!items.length) return;
-    const lines = items.map((i) => `• ${tl(i.name)} ×${i.qty} — ${formatPrice(i.price * i.qty)}`);
+    const lines = items.map((i) => `• ${tl(i.name)}${i.size ? ` (${i.size})` : ''} ×${i.qty} — ${formatPrice(i.price * i.qty)}`);
     const totalStr = formatPrice(totalAZN);
     const header = tl(settings.restaurant_name) || 'Coffee In Lab';
     const tableStr = table ? `\n${t.table}: #${table}` : '';
@@ -26,7 +26,7 @@ export default function CartDrawer({ open, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: items.map((i) => ({ id: i.id, name: tl(i.name), qty: i.qty, price: convertPrice(i.price) })),
+          items: items.map((i) => ({ id: i.id, name: tl(i.name), size: i.size || null, qty: i.qty, price: convertPrice(i.price) })),
           total: convertPrice(totalAZN),
           currency,
           table_number: table || null,
@@ -76,18 +76,21 @@ export default function CartDrawer({ open, onClose }) {
           ) : (
             <ul className="space-y-3">
               {items.map((i) => (
-                <li key={i.id} className="flex gap-3 rounded-xl border border-line bg-surface p-3">
+                <li key={i.key} className="flex gap-3 rounded-xl border border-line bg-surface p-3">
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-surface-2 text-2xl">
                     {i.image ? <img src={i.image} alt="" className="h-full w-full rounded-lg object-cover" /> : (i.icon || '☕')}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-ink">{tl(i.name)}</div>
+                    <div className="truncate text-sm font-semibold text-ink">
+                      {tl(i.name)}
+                      {i.size ? <span className="ml-1 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-muted">{i.size}</span> : null}
+                    </div>
                     <div className="text-xs text-accent">{formatPrice(i.price)}</div>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid h-6 w-6 place-items-center rounded-md bg-surface-2 text-ink">−</button>
+                      <button onClick={() => updateQty(i.key, i.qty - 1)} className="grid h-6 w-6 place-items-center rounded-md bg-surface-2 text-ink">−</button>
                       <span className="w-6 text-center text-sm font-semibold text-ink">{i.qty}</span>
-                      <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid h-6 w-6 place-items-center rounded-md bg-surface-2 text-ink">+</button>
-                      <button onClick={() => remove(i.id)} className="ml-auto text-xs text-muted">🗑</button>
+                      <button onClick={() => updateQty(i.key, i.qty + 1)} className="grid h-6 w-6 place-items-center rounded-md bg-surface-2 text-ink">+</button>
+                      <button onClick={() => remove(i.key)} className="ml-auto text-xs text-muted">🗑</button>
                     </div>
                   </div>
                   <div className="whitespace-nowrap text-sm font-bold text-ink">{formatPrice(i.price * i.qty)}</div>

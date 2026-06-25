@@ -28,7 +28,7 @@ export default function DishModal({ dish, icon, onClose }) {
       >
         <div className="relative grid h-56 place-items-center overflow-hidden bg-surface-2 sm:h-64">
           {dish.image ? (
-            <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-contain p-4" />
+            <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <span className="text-7xl">{icon || '☕'}</span>
           )}

@@ -49,9 +49,9 @@ export default function AIChat() {
     <>
       <div className="group fixed bottom-5 right-5 z-40">
         {!open && (
-          <span className="pointer-events-none absolute right-full top-1/2 mr-3 flex -translate-y-1/2 flex-col whitespace-nowrap rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-right text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+          <span className="pointer-events-none absolute right-full top-1/2 mr-3 flex -translate-y-1/2 flex-col whitespace-nowrap rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-right text-white opacity-100 shadow-lg transition">
             <span className="text-xs font-semibold leading-tight">{t.askAI}</span>
-            <span className="text-[10px] leading-tight text-white/70">{t.aiSubtitle}</span>
+            <span className="text-[10px] leading-tight text-white/80">{t.aiSubtitle}</span>
           </span>
         )}
         <button

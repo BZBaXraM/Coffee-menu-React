@@ -202,7 +202,7 @@ const strings = {
 };
 
 export function useStrings(language) {
-  return strings[language] || strings.en;
+  return strings[language] || strings.az;
 }
 
 export default strings;

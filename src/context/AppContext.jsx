@@ -6,10 +6,10 @@ const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
 
 // Resolve a multilingual JSON value (or plain string) to the current language.
-export function tl(value, language = 'en') {
+export function tl(value, language = 'az') {
   if (value == null) return '';
   if (typeof value === 'object') {
-    return value[language] || value.en || value.az || Object.values(value)[0] || '';
+    return value[language] || value.az || value.en || Object.values(value)[0] || '';
   }
   if (typeof value === 'string') {
     const s = value.trim();

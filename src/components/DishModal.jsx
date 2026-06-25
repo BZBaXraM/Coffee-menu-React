@@ -26,13 +26,12 @@ export default function DishModal({ dish, icon, onClose }) {
         onClick={(e) => e.stopPropagation()}
         className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-surface sm:rounded-3xl"
       >
-        <div className="relative grid h-56 place-items-center overflow-hidden bg-surface-2">
+        <div className="relative grid h-56 place-items-center overflow-hidden bg-surface-2 sm:h-64">
           {dish.image ? (
-            <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-contain" />
+            <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-contain p-4" />
           ) : (
             <span className="text-7xl">{icon || '☕'}</span>
           )}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <button
             onClick={onClose}
             className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-bg/80 text-ink"

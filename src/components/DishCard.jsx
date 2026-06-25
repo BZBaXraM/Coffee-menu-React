@@ -22,11 +22,15 @@ export default function DishCard({ dish, icon, onOpen }) {
     >
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-surface-2">
         {dish.image ? (
-          <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-contain" />
+          <img
+            src={assetUrl(dish.image)}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
+          />
         ) : (
           <span className="absolute inset-0 grid place-items-center text-5xl opacity-80 transition group-hover:scale-110">{icon || '☕'}</span>
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         {dish.is_featured ? (
           <span className="absolute left-2 top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-ink">
             ★ {t.featured}

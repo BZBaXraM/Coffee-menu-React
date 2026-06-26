@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { assetUrl, dishSizes } from '../api.js';
+import { CategoryIcon } from '../categoryIcons.jsx';
 
-export default function DishModal({ dish, icon, onClose }) {
+export default function DishModal({ dish, category, onClose }) {
   const { tl, formatPrice, t } = useApp();
   const { add } = useCart();
   const sizes = dishSizes(dish);
@@ -35,7 +36,7 @@ export default function DishModal({ dish, icon, onClose }) {
           {dish.image ? (
             <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
-            <span className="text-7xl">{icon || '☕'}</span>
+            category ? <CategoryIcon category={category} size={64} boxed={false} /> : <span className="text-7xl">☕</span>
           )}
           <button
             onClick={onClose}

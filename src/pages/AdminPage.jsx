@@ -3,6 +3,8 @@ import { useApp, tl } from '../context/AppContext.jsx';
 import { LANGUAGES } from '../i18n.js';
 import Pagination from '../components/Pagination.jsx';
 import { API_URL, assetUrl, wsUrl } from '../api.js';
+import { AdminLangProvider, useAdminLang } from '../adminStrings.jsx';
+import { CategoryIcon, ICON_OPTIONS } from '../categoryIcons.jsx';
 
 const LANG_CODES = LANGUAGES.map((l) => l.code);
 
@@ -17,7 +19,8 @@ function parseML(value) {
 }
 
 function MultiLang({ label, value, onChange, textarea }) {
-  const [lang, setLang] = useState('en');
+  const { lang: adminLang } = useAdminLang();
+  const [lang, setLang] = useState(adminLang);
   const Field = textarea ? 'textarea' : 'input';
   return (
     <div>
@@ -57,7 +60,16 @@ function Field({ label, ...props }) {
 
 // ---------- main ----------
 export default function AdminPage() {
+  return (
+    <AdminLangProvider>
+      <AdminPanel />
+    </AdminLangProvider>
+  );
+}
+
+function AdminPanel() {
   const { theme, toggleTheme } = useApp();
+  const { lang: adminLang, setLang: setAdminLang, t } = useAdminLang();
   const [pw, setPw] = useState(() => sessionStorage.getItem('admin_pw') || '');
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -92,7 +104,7 @@ export default function AdminPage() {
       setPw(loginInput);
       setAuthed(true);
     } else {
-      setError('Wrong password');
+      setError(t.wrongPassword);
     }
   };
 
@@ -109,7 +121,7 @@ export default function AdminPage() {
         <form onSubmit={login} className="w-full max-w-sm space-y-4 rounded-2xl border border-line bg-surface p-6">
           <div className="text-center">
             <div className="text-4xl">☕</div>
-            <h1 className="mt-2 font-display text-2xl font-bold text-ink">Admin Panel</h1>
+            <h1 className="mt-2 font-display text-2xl font-bold text-ink">{t.panel}</h1>
             <p className="text-sm text-muted">Coffee In Lab</p>
           </div>
           <div className="relative">
@@ -117,7 +129,7 @@ export default function AdminPage() {
               type={showPw ? 'text' : 'password'}
               value={loginInput}
               onChange={(e) => setLoginInput(e.target.value)}
-              placeholder="Password"
+              placeholder={t.password}
               autoFocus
               className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 pr-10 text-sm text-ink outline-none focus:border-accent"
             />
@@ -126,30 +138,37 @@ export default function AdminPage() {
             </button>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <button className="w-full rounded-lg bg-accent py-2.5 font-semibold text-accent-ink">Sign in</button>
+          <button className="w-full rounded-lg bg-accent py-2.5 font-semibold text-accent-ink">{t.signIn}</button>
         </form>
       </div>
     );
   }
 
   const tabs = [
-    ['dishes', '☕ Dishes'],
-    ['categories', '🏷 Categories'],
-    ['promotions', '🔥 Promotions'],
-    ['orders', '🧾 Orders'],
-    ['settings', '⚙️ Settings'],
-    ['qr', '🔳 QR'],
+    ['dishes', t.tabDishes],
+    ['categories', t.tabCategories],
+    ['promotions', t.tabPromotions],
+    ['orders', t.tabOrders],
+    ['settings', t.tabSettings],
+    ['qr', t.tabQr],
   ];
 
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-20 border-b border-line bg-surface">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="font-display text-lg font-bold text-ink">☕ Admin</div>
+          <div className="font-display text-lg font-bold text-ink">☕ {t.admin}</div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setAdminLang(adminLang === 'ru' ? 'en' : 'ru')}
+              className="grid h-9 min-w-9 place-items-center rounded-lg border border-line bg-bg px-2 text-xs font-semibold uppercase text-ink"
+              title="Язык / Language"
+            >
+              {adminLang === 'ru' ? 'RU' : 'EN'}
+            </button>
             <button onClick={toggleTheme} className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-bg">{theme === 'dark' ? '☀️' : '🌙'}</button>
-            <a href="/" className="rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink">View menu</a>
-            <button onClick={logout} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">Logout</button>
+            <a href="/" className="rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink">{t.viewMenu}</a>
+            <button onClick={logout} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">{t.logout}</button>
           </div>
         </div>
         <div className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-3 pb-2">
@@ -179,6 +198,7 @@ export default function AdminPage() {
 
 // ---------- Dishes ----------
 function DishesTab({ headers }) {
+  const { t, lang } = useAdminLang();
   const [items, setItems] = useState([]);
   const [cats, setCats] = useState([]);
   const [page, setPage] = useState(1);
@@ -218,7 +238,7 @@ function DishesTab({ headers }) {
   };
 
   const del = async (id) => {
-    if (!confirm('Delete this drink?')) return;
+    if (!confirm(t.confirmDeleteDrink)) return;
     await fetch(`${API_URL}/admin/dishes/${id}`, { method: 'DELETE', headers: headers() });
     load();
   };
@@ -226,21 +246,21 @@ function DishesTab({ headers }) {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-xl font-bold text-ink">Drinks ({items.length})</h2>
-        <button onClick={() => setEditing(blank)} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">+ New</button>
+        <h2 className="font-display text-xl font-bold text-ink">{t.drinks} ({items.length})</h2>
+        <button onClick={() => setEditing(blank)} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">{t.new}</button>
       </div>
       <div className="grid gap-2">
         {items.map((d) => (
           <div key={d.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-surface-2 text-xl">
-              {d.image ? <img src={assetUrl(d.image)} className="h-full w-full rounded-lg object-cover" alt="" /> : (cats.find((c) => c.id === d.category_id)?.icon || '☕')}
+            <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-surface-2 text-xl">
+              {d.image ? <img src={assetUrl(d.image)} className="h-full w-full rounded-lg object-cover" alt="" /> : <CategoryIcon category={cats.find((c) => c.id === d.category_id)} size={18} boxed={false} />}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold text-ink">{tl(d.name, 'en')}</div>
-              <div className="text-xs text-muted">{d.price} AZN {d.is_featured ? '· ★' : ''} {d.is_available ? '' : '· hidden'}</div>
+              <div className="truncate text-sm font-semibold text-ink">{tl(d.name, lang)}</div>
+              <div className="text-xs text-muted">{d.price} AZN {d.is_featured ? '· ★' : ''} {d.is_available ? '' : `· ${t.hidden}`}</div>
             </div>
-            <button onClick={() => setEditing({ ...d, name: parseML(d.name), description: parseML(d.description), ingredients: parseML(d.ingredients) })} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">Edit</button>
-            <button onClick={() => del(d.id)} className="rounded-lg border border-line px-2 py-1 text-xs text-red-500">Del</button>
+            <button onClick={() => setEditing({ ...d, name: parseML(d.name), description: parseML(d.description), ingredients: parseML(d.ingredients) })} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">{t.edit}</button>
+            <button onClick={() => del(d.id)} className="rounded-lg border border-line px-2 py-1 text-xs text-red-500">{t.del}</button>
           </div>
         ))}
       </div>
@@ -252,6 +272,7 @@ function DishesTab({ headers }) {
 }
 
 function DishForm({ form: initial, cats, onCancel, onSave }) {
+  const { t, lang } = useAdminLang();
   const [form, setForm] = useState(initial);
   const [file, setFile] = useState(null);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -280,29 +301,29 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
         onSubmit={(e) => { e.preventDefault(); onSave(form, file); }}
         className="max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-2xl bg-surface p-5"
       >
-        <h3 className="font-display text-lg font-bold text-ink">{form.id ? 'Edit' : 'New'} drink</h3>
-        <MultiLang label="Name" value={form.name} onChange={(v) => set('name', v)} />
-        <MultiLang label="Description" value={form.description} onChange={(v) => set('description', v)} textarea />
-        <MultiLang label="Ingredients (comma list per lang)" value={form.ingredients} onChange={(v) => set('ingredients', v)} />
+        <h3 className="font-display text-lg font-bold text-ink">{form.id ? t.editTitle : t.newTitle} · {t.drink}</h3>
+        <MultiLang label={t.name} value={form.name} onChange={(v) => set('name', v)} />
+        <MultiLang label={t.description} value={form.description} onChange={(v) => set('description', v)} textarea />
+        <MultiLang label={t.ingredients} value={form.ingredients} onChange={(v) => set('ingredients', v)} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Price (AZN)" type="number" step="0.25" value={form.price} onChange={(e) => set('price', e.target.value)} required />
+          <Field label={t.priceAzn} type="number" step="0.25" value={form.price} onChange={(e) => set('price', e.target.value)} required />
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">Category</span>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{t.category}</span>
             <select value={form.category_id} onChange={(e) => set('category_id', e.target.value)} className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink">
-              {cats.map((c) => <option key={c.id} value={c.id}>{tl(c.name, 'en')}</option>)}
+              {cats.map((c) => <option key={c.id} value={c.id}>{tl(c.name, lang)}</option>)}
             </select>
           </label>
-          <Field label="Calories" type="number" value={form.calories || ''} onChange={(e) => set('calories', e.target.value)} />
-          <Field label="Weight (ml/g)" type="number" value={form.weight || ''} onChange={(e) => set('weight', e.target.value)} />
+          <Field label={t.calories} type="number" value={form.calories || ''} onChange={(e) => set('calories', e.target.value)} />
+          <Field label={t.weight} type="number" value={form.weight || ''} onChange={(e) => set('weight', e.target.value)} />
         </div>
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Sizes (optional)</label>
-            <button type="button" onClick={addSize} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">+ Add size</button>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{t.sizesOptional}</label>
+            <button type="button" onClick={addSize} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">{t.addSize}</button>
           </div>
           {sizes.length === 0 ? (
-            <p className="text-xs text-muted">No sizes — the single price above is used. Add e.g. S / M for milkshakes.</p>
+            <p className="text-xs text-muted">{t.noSizes}</p>
           ) : (
             <div className="space-y-2">
               {sizes.map((s, i) => (
@@ -310,7 +331,7 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
                   <input
                     value={s.label}
                     onChange={(e) => updateSize(i, 'label', e.target.value)}
-                    placeholder="Label (S, M…)"
+                    placeholder={t.sizeLabelPh}
                     className="w-1/2 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                   />
                   <input
@@ -318,25 +339,25 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
                     step="0.25"
                     value={s.price}
                     onChange={(e) => updateSize(i, 'price', e.target.value)}
-                    placeholder="Price (AZN)"
+                    placeholder={t.priceAzn}
                     className="w-1/2 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                   />
                   <button type="button" onClick={() => removeSize(i)} className="shrink-0 rounded-lg border border-line px-2 py-2 text-xs text-red-500">✕</button>
                 </div>
               ))}
-              <p className="text-[11px] text-muted">Tip: keep the “Price (AZN)” field equal to the smallest size — it’s shown on cards and used as a fallback.</p>
+              <p className="text-[11px] text-muted">{t.sizeTip}</p>
             </div>
           )}
         </div>
         <div className="flex flex-wrap gap-4 text-sm text-ink">
-          {[['is_featured', 'Featured ★'], ['is_available', 'Available']].map(([k, lbl]) => (
+          {[['is_featured', t.featured], ['is_available', t.available]].map(([k, lbl]) => (
             <label key={k} className="flex items-center gap-2">
               <input type="checkbox" checked={!!Number(form[k])} onChange={(e) => set(k, e.target.checked ? 1 : 0)} /> {lbl}
             </label>
           ))}
         </div>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">Photo (optional)</span>
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{t.photoOptional}</span>
           {(file || form.image) && (
             <div className="mb-2 flex items-center gap-3">
               <img src={file ? URL.createObjectURL(file) : assetUrl(form.image)} alt="" className="h-16 w-16 rounded-lg object-cover" />
@@ -345,15 +366,15 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
                 onClick={() => { setFile(null); set('image', ''); }}
                 className="rounded-lg border border-line px-2 py-1 text-xs text-red-500"
               >
-                Remove photo
+                {t.removePhoto}
               </button>
             </div>
           )}
           <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} className="text-sm text-ink" />
         </label>
         <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">Cancel</button>
-          <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">Save</button>
+          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">{t.cancel}</button>
+          <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">{t.save}</button>
         </div>
       </form>
     </div>
@@ -362,60 +383,125 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
 
 // ---------- Categories ----------
 function CategoriesTab({ headers }) {
+  const { t, lang } = useAdminLang();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
 
   const load = useCallback(() => fetch(`${API_URL}/admin/categories`, { headers: headers() }).then((r) => r.json()).then(setItems), [headers]);
   useEffect(() => { load(); }, [load]);
 
-  const save = async (form) => {
-    const body = JSON.stringify({ name: JSON.stringify(form.name), icon: form.icon, sort_order: Number(form.sort_order) || 0, is_active: form.is_active ?? 1 });
+  const save = async (form, file) => {
+    const fd = new FormData();
+    fd.append('name', JSON.stringify(form.name));
+    fd.append('icon', form.icon || '☕');
+    fd.append('icon_type', form.icon_type || 'svg');
+    fd.append('icon_key', form.icon_key || '');
+    fd.append('sort_order', Number(form.sort_order) || 0);
+    fd.append('is_active', form.is_active ?? 1);
+    // new upload wins; otherwise send the current path (empty string = removed)
+    if (form.icon_type === 'image') {
+      if (file) fd.append('iconFile', file);
+      else fd.append('icon_url', form.icon_url ?? '');
+    } else {
+      fd.append('icon_url', ''); // switching back to a built-in clears any old upload
+    }
     const method = form.id ? 'PUT' : 'POST';
     const url = form.id ? `${API_URL}/admin/categories/${form.id}` : `${API_URL}/admin/categories`;
-    await fetch(url, { method, headers: headers(true), body });
+    await fetch(url, { method, headers: headers(), body: fd });
     setEditing(null); load();
   };
-  const del = async (id) => { if (confirm('Delete category?')) { await fetch(`${API_URL}/admin/categories/${id}`, { method: 'DELETE', headers: headers() }); load(); } };
+  const del = async (id) => { if (confirm(t.confirmDeleteCategory)) { await fetch(`${API_URL}/admin/categories/${id}`, { method: 'DELETE', headers: headers() }); load(); } };
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-xl font-bold text-ink">Categories</h2>
-        <button onClick={() => setEditing({ name: { en: '' }, icon: '☕', sort_order: items.length + 1, is_active: 1 })} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">+ New</button>
+        <h2 className="font-display text-xl font-bold text-ink">{t.categories}</h2>
+        <button onClick={() => setEditing({ name: { en: '' }, icon: '☕', icon_type: 'svg', icon_key: 'espresso', icon_url: '', sort_order: items.length + 1, is_active: 1 })} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">{t.new}</button>
       </div>
       <div className="grid gap-2">
         {items.map((c) => (
           <div key={c.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
-            <span className="text-2xl">{c.icon}</span>
-            <div className="flex-1 text-sm font-semibold text-ink">{tl(c.name, 'en')}</div>
+            <CategoryIcon category={c} size={20} />
+            <div className="flex-1 text-sm font-semibold text-ink">{tl(c.name, lang)}</div>
             <span className="text-xs text-muted">#{c.sort_order}</span>
-            <button onClick={() => setEditing({ ...c, name: parseML(c.name) })} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">Edit</button>
-            <button onClick={() => del(c.id)} className="rounded-lg border border-line px-2 py-1 text-xs text-red-500">Del</button>
+            <button onClick={() => setEditing({ ...c, name: parseML(c.name) })} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">{t.edit}</button>
+            <button onClick={() => del(c.id)} className="rounded-lg border border-line px-2 py-1 text-xs text-red-500">{t.del}</button>
           </div>
         ))}
       </div>
-      {editing && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setEditing(null)}>
-          <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save(editing); }} className="w-full max-w-md space-y-3 rounded-2xl bg-surface p-5">
-            <h3 className="font-display text-lg font-bold text-ink">{editing.id ? 'Edit' : 'New'} category</h3>
-            <MultiLang label="Name" value={editing.name} onChange={(v) => setEditing((f) => ({ ...f, name: v }))} />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Icon (emoji)" value={editing.icon} onChange={(e) => setEditing((f) => ({ ...f, icon: e.target.value }))} />
-              <Field label="Sort order" type="number" value={editing.sort_order} onChange={(e) => setEditing((f) => ({ ...f, sort_order: e.target.value }))} />
+      {editing && <CategoryForm form={editing} onCancel={() => setEditing(null)} onSave={save} />}
+    </div>
+  );
+}
+
+function CategoryForm({ form: initial, onCancel, onSave }) {
+  const { t } = useAdminLang();
+  const [form, setForm] = useState({ icon_type: 'svg', icon_key: 'espresso', icon_url: '', ...initial });
+  const [file, setFile] = useState(null);
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const customPreview = file ? URL.createObjectURL(file) : (form.icon_url ? assetUrl(form.icon_url) : null);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onCancel}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); onSave(form, file); }} className="max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-2xl bg-surface p-5">
+        <h3 className="font-display text-lg font-bold text-ink">{form.id ? t.editTitle : t.newTitle} · {t.categoryWord}</h3>
+        <MultiLang label={t.name} value={form.name} onChange={(v) => set('name', v)} />
+
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{t.icon}</label>
+          <div className="mb-2 inline-flex rounded-lg border border-line p-0.5 text-xs">
+            {[['svg', t.iconBuiltIn], ['image', t.iconCustom]].map(([val, lbl]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => set('icon_type', val)}
+                className={`rounded-md px-3 py-1 font-semibold ${form.icon_type === val ? 'bg-accent text-accent-ink' : 'text-muted'}`}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+
+          {form.icon_type === 'image' ? (
+            <div className="flex items-center gap-3">
+              {customPreview && (
+                <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-lg bg-surface-2">
+                  <img src={customPreview} alt="" className="h-7 w-7 object-contain" />
+                </span>
+              )}
+              <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} className="text-sm text-ink" />
             </div>
-            <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">Cancel</button>
-              <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">Save</button>
+          ) : (
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+              {ICON_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => set('icon_key', opt.key)}
+                  title={opt.label}
+                  className={`grid place-items-center rounded-lg border p-1.5 ${form.icon_key === opt.key ? 'border-accent ring-1 ring-accent' : 'border-line'}`}
+                >
+                  <CategoryIcon category={{ icon_type: 'svg', icon_key: opt.key }} size={18} />
+                </button>
+              ))}
             </div>
-          </form>
+          )}
         </div>
-      )}
+
+        <Field label={t.sortOrder} type="number" value={form.sort_order} onChange={(e) => set('sort_order', e.target.value)} />
+        <div className="flex gap-2 pt-2">
+          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">{t.cancel}</button>
+          <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">{t.save}</button>
+        </div>
+      </form>
     </div>
   );
 }
 
 // ---------- Promotions ----------
 function PromotionsTab({ headers }) {
+  const { t, lang } = useAdminLang();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
 
@@ -434,34 +520,34 @@ function PromotionsTab({ headers }) {
     await fetch(url, { method, headers: headers(), body: fd });
     setEditing(null); load();
   };
-  const del = async (id) => { if (confirm('Delete promotion?')) { await fetch(`${API_URL}/admin/promotions/${id}`, { method: 'DELETE', headers: headers() }); load(); } };
+  const del = async (id) => { if (confirm(t.confirmDeletePromotion)) { await fetch(`${API_URL}/admin/promotions/${id}`, { method: 'DELETE', headers: headers() }); load(); } };
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-xl font-bold text-ink">Promotions</h2>
-        <button onClick={() => setEditing({ title: { en: '' }, description: { en: '' }, discount_percent: 10, is_active: 1, sort_order: items.length + 1 })} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">+ New</button>
+        <h2 className="font-display text-xl font-bold text-ink">{t.promotions}</h2>
+        <button onClick={() => setEditing({ title: { en: '' }, description: { en: '' }, discount_percent: 10, is_active: 1, sort_order: items.length + 1 })} className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-ink">{t.new}</button>
       </div>
       <div className="grid gap-2">
         {items.map((p) => (
           <div key={p.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
-            <div className="flex-1 text-sm font-semibold text-ink">{tl(p.title, 'en')}</div>
+            <div className="flex-1 text-sm font-semibold text-ink">{tl(p.title, lang)}</div>
             <span className="text-xs text-accent">−{p.discount_percent}%</span>
-            <button onClick={() => setEditing({ ...p, title: parseML(p.title), description: parseML(p.description) })} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">Edit</button>
-            <button onClick={() => del(p.id)} className="rounded-lg border border-line px-2 py-1 text-xs text-red-500">Del</button>
+            <button onClick={() => setEditing({ ...p, title: parseML(p.title), description: parseML(p.description) })} className="rounded-lg border border-line px-2 py-1 text-xs text-ink">{t.edit}</button>
+            <button onClick={() => del(p.id)} className="rounded-lg border border-line px-2 py-1 text-xs text-red-500">{t.del}</button>
           </div>
         ))}
       </div>
       {editing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setEditing(null)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save(editing); }} className="w-full max-w-md space-y-3 rounded-2xl bg-surface p-5">
-            <h3 className="font-display text-lg font-bold text-ink">{editing.id ? 'Edit' : 'New'} promotion</h3>
-            <MultiLang label="Title" value={editing.title} onChange={(v) => setEditing((f) => ({ ...f, title: v }))} />
-            <MultiLang label="Description" value={editing.description} onChange={(v) => setEditing((f) => ({ ...f, description: v }))} textarea />
-            <Field label="Discount %" type="number" value={editing.discount_percent} onChange={(e) => setEditing((f) => ({ ...f, discount_percent: e.target.value }))} />
+            <h3 className="font-display text-lg font-bold text-ink">{editing.id ? t.editTitle : t.newTitle} · {t.promotionWord}</h3>
+            <MultiLang label={t.title} value={editing.title} onChange={(v) => setEditing((f) => ({ ...f, title: v }))} />
+            <MultiLang label={t.description} value={editing.description} onChange={(v) => setEditing((f) => ({ ...f, description: v }))} textarea />
+            <Field label={t.discount} type="number" value={editing.discount_percent} onChange={(e) => setEditing((f) => ({ ...f, discount_percent: e.target.value }))} />
             <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">Cancel</button>
-              <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">Save</button>
+              <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">{t.cancel}</button>
+              <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">{t.save}</button>
             </div>
           </form>
         </div>
@@ -472,9 +558,11 @@ function PromotionsTab({ headers }) {
 
 // ---------- Orders ----------
 function OrdersTab({ headers }) {
+  const { t } = useAdminLang();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const statusLabels = { new: t.statusNew, preparing: t.statusPreparing, ready: t.statusReady, done: t.statusDone, cancelled: t.statusCancelled };
 
   const load = useCallback((p = page) => {
     fetch(`${API_URL}/admin/orders?page=${p}&limit=20`, { headers: headers() })
@@ -502,9 +590,9 @@ function OrdersTab({ headers }) {
 
   return (
     <div>
-      <h2 className="mb-4 font-display text-xl font-bold text-ink">Orders</h2>
+      <h2 className="mb-4 font-display text-xl font-bold text-ink">{t.orders}</h2>
       <div className="grid gap-2">
-        {items.length === 0 && <p className="text-muted">No orders yet.</p>}
+        {items.length === 0 && <p className="text-muted">{t.noOrders}</p>}
         {items.map((o) => {
           let list = [];
           try { list = JSON.parse(o.items); } catch { /* ignore */ }
@@ -513,11 +601,11 @@ function OrdersTab({ headers }) {
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold text-ink">#{o.id} · {o.total} {o.currency}</div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted" title={o.table_number ? 'From QR code' : ''}>
+                  <span className="text-xs text-muted" title={o.table_number ? t.fromQr : ''}>
                     {o.table_number ? `🪑 #${o.table_number} (QR)` : '—'}
                   </span>
                   <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)} className="rounded-lg border border-line bg-bg px-2 py-1 text-xs text-ink">
-                    {['new', 'preparing', 'ready', 'done', 'cancelled'].map((s) => <option key={s} value={s}>{s}</option>)}
+                    {['new', 'preparing', 'ready', 'done', 'cancelled'].map((s) => <option key={s} value={s}>{statusLabels[s]}</option>)}
                   </select>
                 </div>
               </div>
@@ -536,6 +624,7 @@ function OrdersTab({ headers }) {
 
 // ---------- Settings ----------
 function SettingsTab({ headers }) {
+  const { t } = useAdminLang();
   const [s, setS] = useState(null);
   const [saved, setSaved] = useState(false);
 
@@ -544,7 +633,7 @@ function SettingsTab({ headers }) {
       .then((r) => r.json())
       .then((d) => { delete d.admin_password; setS(d); }); // don't prefill the password
   }, [headers]);
-  if (!s) return <p className="text-muted">Loading…</p>;
+  if (!s) return <p className="text-muted">{t.loading}</p>;
 
   const set = (k, v) => setS((p) => ({ ...p, [k]: v }));
   const name = parseML(s.restaurant_name);
@@ -559,31 +648,32 @@ function SettingsTab({ headers }) {
 
   return (
     <form onSubmit={save} className="max-w-lg space-y-4">
-      <h2 className="font-display text-xl font-bold text-ink">Settings</h2>
-      <MultiLang label="Café name" value={name} onChange={(v) => set('restaurant_name', JSON.stringify(v))} />
+      <h2 className="font-display text-xl font-bold text-ink">{t.settings}</h2>
+      <MultiLang label={t.cafeName} value={name} onChange={(v) => set('restaurant_name', JSON.stringify(v))} />
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Phone" value={s.phone || ''} onChange={(e) => set('phone', e.target.value)} />
-        <Field label="Instagram" value={s.instagram || ''} onChange={(e) => set('instagram', e.target.value)} />
-        <Field label="Wi-Fi name" value={s.wifi_name || ''} onChange={(e) => set('wifi_name', e.target.value)} />
-        <Field label="Wi-Fi password" value={s.wifi_password || ''} onChange={(e) => set('wifi_password', e.target.value)} />
-        <Field label="Address" value={s.address || ''} onChange={(e) => set('address', e.target.value)} />
+        <Field label={t.phone} value={s.phone || ''} onChange={(e) => set('phone', e.target.value)} />
+        <Field label={t.instagram} value={s.instagram || ''} onChange={(e) => set('instagram', e.target.value)} />
+        <Field label={t.wifiName} value={s.wifi_name || ''} onChange={(e) => set('wifi_name', e.target.value)} />
+        <Field label={t.wifiPassword} value={s.wifi_password || ''} onChange={(e) => set('wifi_password', e.target.value)} />
+        <Field label={t.address} value={s.address || ''} onChange={(e) => set('address', e.target.value)} />
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">Accent color</span>
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{t.accentColor}</span>
           <input type="color" value={s.accent_color || '#9C6B3F'} onChange={(e) => set('accent_color', e.target.value)} className="h-10 w-full rounded-lg border border-line bg-bg" />
         </label>
-        <Field label="Menu URL (for QR)" value={s.menu_url || ''} onChange={(e) => set('menu_url', e.target.value)} />
-        <Field label="New admin password" type="password" placeholder="leave blank to keep" value={s.admin_password || ''} onChange={(e) => set('admin_password', e.target.value)} />
+        <Field label={t.menuUrl} value={s.menu_url || ''} onChange={(e) => set('menu_url', e.target.value)} />
+        <Field label={t.newAdminPassword} type="password" placeholder={t.leaveBlank} value={s.admin_password || ''} onChange={(e) => set('admin_password', e.target.value)} />
       </div>
       <div className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs text-muted">
-        🔒 WhatsApp number is fixed: <span className="font-semibold text-ink">{s.whatsapp_number}</span>
+        🔒 {t.whatsappFixed} <span className="font-semibold text-ink">{s.whatsapp_number}</span>
       </div>
-      <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink">{saved ? '✓ Saved' : 'Save settings'}</button>
+      <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink">{saved ? t.saved : t.saveSettings}</button>
     </form>
   );
 }
 
 // ---------- QR ----------
 function QRTab({ headers }) {
+  const { t } = useAdminLang();
   const [table, setTable] = useState('');
   const [qr, setQr] = useState(null);
   const [url, setUrl] = useState('');
@@ -597,16 +687,16 @@ function QRTab({ headers }) {
 
   return (
     <div className="max-w-md space-y-4">
-      <h2 className="font-display text-xl font-bold text-ink">QR Code</h2>
+      <h2 className="font-display text-xl font-bold text-ink">{t.qrCode}</h2>
       <form onSubmit={gen} className="flex items-end gap-2">
-        <Field label="Table number (optional)" value={table} onChange={(e) => setTable(e.target.value)} />
-        <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink">Generate</button>
+        <Field label={t.tableNumber} value={table} onChange={(e) => setTable(e.target.value)} />
+        <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink">{t.generate}</button>
       </form>
       {qr && (
         <div className="rounded-2xl border border-line bg-surface p-5 text-center">
           <img src={qr} alt="QR" className="mx-auto w-56" />
           <p className="mt-2 break-all text-xs text-muted">{url}</p>
-          <a href={qr} download="coffee-qr.png" className="mt-3 inline-block rounded-lg border border-line px-3 py-2 text-sm text-ink">Download</a>
+          <a href={qr} download="coffee-qr.png" className="mt-3 inline-block rounded-lg border border-line px-3 py-2 text-sm text-ink">{t.download}</a>
         </div>
       )}
     </div>

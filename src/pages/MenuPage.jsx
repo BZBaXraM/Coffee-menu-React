@@ -51,10 +51,10 @@ export default function MenuPage() {
       .finally(() => setLoading(false));
   }, [page, activeCat, debounced]);
 
-  const iconFor = useMemo(() => {
+  const categoryFor = useMemo(() => {
     const map = {};
-    categories.forEach((c) => { map[c.id] = c.icon; });
-    return (id) => map[id] || '☕';
+    categories.forEach((c) => { map[c.id] = c; });
+    return (id) => map[id] || null;
   }, [categories]);
 
   // Categories hidden from the menu (matched by their English name).
@@ -108,7 +108,7 @@ export default function MenuPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3 lg:grid-cols-4">
             {visibleDishes.map((d) => (
-              <DishCard key={d.id} dish={d} icon={iconFor(d.category_id)} onOpen={setModalDish} />
+              <DishCard key={d.id} dish={d} category={categoryFor(d.category_id)} onOpen={setModalDish} />
             ))}
           </div>
         )}
@@ -121,7 +121,7 @@ export default function MenuPage() {
       <AIChat />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       {modalDish && (
-        <DishModal dish={modalDish} icon={iconFor(modalDish.category_id)} onClose={() => setModalDish(null)} />
+        <DishModal dish={modalDish} category={categoryFor(modalDish.category_id)} onClose={() => setModalDish(null)} />
       )}
     </div>
   );

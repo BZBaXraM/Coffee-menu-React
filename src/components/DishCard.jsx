@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { assetUrl, dishSizes } from '../api.js';
+import { CategoryIcon } from '../categoryIcons.jsx';
 
-export default function DishCard({ dish, icon, onOpen }) {
+export default function DishCard({ dish, category, onOpen }) {
   const { tl, formatPrice, t } = useApp();
   const { add } = useCart();
   const [justAdded, setJustAdded] = useState(false);
@@ -35,7 +36,9 @@ export default function DishCard({ dish, icon, onOpen }) {
             className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
           />
         ) : (
-          <span className="absolute inset-0 grid place-items-center text-5xl opacity-80 transition group-hover:scale-110">{icon || '☕'}</span>
+          <span className="absolute inset-0 grid place-items-center transition group-hover:scale-110">
+            {category ? <CategoryIcon category={category} size={44} boxed={false} /> : <span className="text-5xl opacity-80">☕</span>}
+          </span>
         )}
         {dish.is_featured ? (
           <span className="absolute left-2 top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-ink">

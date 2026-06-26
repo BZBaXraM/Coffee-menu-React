@@ -1,7 +1,7 @@
 // All data comes from the remote backend. The origin can be overridden at
 // build time with VITE_API_BASE; it defaults to the production API.
-// export const API_BASE = (import.meta.env.VITE_API_BASE || 'https://coffee-menu.bahram.site').replace(/\/$/, '');
-export const API_BASE = (import.meta.env.VITE_API_BASE || 'http://localhost:3000').replace(/\/$/, '');
+export const API_BASE = (import.meta.env.VITE_API_BASE || 'https://coffee-menu.bahram.site').replace(/\/$/, '');
+// export const API_BASE = (import.meta.env.VITE_API_BASE || 'http://localhost:3000').replace(/\/$/, '');
 
 // Base for REST calls, e.g. `${API_URL}/menu/dishes`.
 export const API_URL = `${API_BASE}/api`;

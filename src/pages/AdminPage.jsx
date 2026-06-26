@@ -3,7 +3,7 @@ import { useApp, tl } from '../context/AppContext.jsx';
 import { LANGUAGES } from '../i18n.js';
 import Pagination from '../components/Pagination.jsx';
 import { API_URL, assetUrl, wsUrl } from '../api.js';
-import { AdminLangProvider, useAdminLang } from '../adminStrings.jsx';
+import { AdminLangProvider, useAdminLang, ADMIN_LANG_CODES } from '../adminStrings.jsx';
 import { CategoryIcon, ICON_OPTIONS } from '../categoryIcons.jsx';
 
 const LANG_CODES = LANGUAGES.map((l) => l.code);
@@ -160,11 +160,14 @@ function AdminPanel() {
           <div className="font-display text-lg font-bold text-ink">☕ {t.admin}</div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setAdminLang(adminLang === 'ru' ? 'en' : 'ru')}
+              onClick={() => {
+                const i = ADMIN_LANG_CODES.indexOf(adminLang);
+                setAdminLang(ADMIN_LANG_CODES[(i + 1) % ADMIN_LANG_CODES.length]);
+              }}
               className="grid h-9 min-w-9 place-items-center rounded-lg border border-line bg-bg px-2 text-xs font-semibold uppercase text-ink"
-              title="Язык / Language"
+              title="Язык / Language / Dil"
             >
-              {adminLang === 'ru' ? 'RU' : 'EN'}
+              {adminLang.toUpperCase()}
             </button>
             <button onClick={toggleTheme} className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-bg">{theme === 'dark' ? '☀️' : '🌙'}</button>
             <a href="/" className="rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink">{t.viewMenu}</a>

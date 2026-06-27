@@ -9,12 +9,14 @@ import AIChat from '../components/AIChat.jsx';
 import ContactBar from '../components/ContactBar.jsx';
 import RestaurantInfo from '../components/RestaurantInfo.jsx';
 import Pagination from '../components/Pagination.jsx';
+import PromotionBanner from '../components/PromotionBanner.jsx';
 import { API_URL } from '../api.js';
 
 export default function MenuPage() {
   const { tl, t, settings } = useApp();
   const [categories, setCategories] = useState([]);
   const [dishes, setDishes] = useState([]);
+  const [promotions, setPromotions] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [activeCat, setActiveCat] = useState(null);
@@ -26,6 +28,10 @@ export default function MenuPage() {
 
   useEffect(() => {
     fetch(`${API_URL}/menu/categories`).then((r) => r.json()).then(setCategories).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_URL}/menu/promotions`).then((r) => r.json()).then(setPromotions).catch(() => {});
   }, []);
 
   // debounce search
@@ -92,6 +98,8 @@ export default function MenuPage() {
           <p className="mt-1 font-display text-sm italic text-accent">{t.tagline}</p>
           <ContactBar />
         </section>
+
+        <PromotionBanner promotions={promotions} />
 
         <div id="menu" className="sticky top-[58px] z-20 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur">
           <CategoryFilter categories={visibleCategories} active={activeCat} onChange={setActiveCat} />

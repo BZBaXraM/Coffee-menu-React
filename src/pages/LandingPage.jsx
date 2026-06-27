@@ -3,66 +3,80 @@ import { restaurants } from '../restaurants.js';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-bg text-ink">
-      <header className="border-b border-line bg-surface">
+    <div className="min-h-screen bg-[#f4f5f7] text-[#111827]">
+      <header className="border-b border-[#d9dde3] bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <img src="/coffee-logo.png" alt="" className="h-11 w-11 rounded-full object-cover" />
+          <Link to="/" className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#111827] text-sm font-bold text-white">
+              QR
+            </span>
             <div>
-              <div className="font-display text-xl font-bold">Menyu QR</div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted">Restoran menyulari</div>
+              <div className="text-lg font-bold leading-tight">menyuqr.com</div>
+              <div className="text-xs font-medium uppercase tracking-[0.16em] text-[#6b7280]">
+                Menu platformasi
+              </div>
             </div>
-          </div>
+          </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <section className="mb-8">
-          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Menyu QR</h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
-            Restorani secin ve QR menyuya daxil olun. Her restoranin oz sehifesi,
-            oz menyusu ve oz sifaris axini var.
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+        <section className="mb-7 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6b7280]">Mekanlar</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Menyu secin</h1>
+          <p className="mt-3 text-sm leading-6 text-[#4b5563] sm:text-base">
+            Platformadaki aktiv menyular ve yaxinda elave olunacaq mekanlar burada gorunur.
           </p>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Restaurants">
-          {restaurants.map((restaurant) => {
-            const content = (
-              <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
-                <div className="flex items-start gap-4 p-4">
-                  <img src={restaurant.logo || '/coffee-logo.png'} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="truncate font-display text-xl font-bold text-ink">{restaurant.name}</h2>
-                      {restaurant.comingSoon ? (
-                        <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
-                          Tezlikle
-                        </span>
-                      ) : null}
+        <section className="grid gap-4 sm:grid-cols-2" aria-label="Restaurants">
+          {restaurants.map((restaurant) => (
+            <Link key={restaurant.slug} to={`/${restaurant.slug}`} className="block">
+              <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-[#d9dde3] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#b8c0cc] hover:shadow-md">
+                <div className="grid h-44 place-items-center border-b border-[#e5e7eb] bg-[#f9fafb] p-5">
+                  <img
+                    src={restaurant.logo}
+                    alt=""
+                    className="max-h-32 max-w-full rounded-md object-contain"
+                  />
+                </div>
+
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-xl font-bold text-[#111827]">{restaurant.name}</h2>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6b7280]">
+                        {restaurant.category}
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-accent">{restaurant.category}</p>
+                    {restaurant.comingSoon ? (
+                      <span className="shrink-0 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-2.5 py-1 text-[11px] font-semibold text-[#1d4ed8]">
+                        Coming soon
+                      </span>
+                    ) : (
+                      <span className="shrink-0 rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2.5 py-1 text-[11px] font-semibold text-[#15803d]">
+                        Aktiv
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-4 flex-1 text-sm leading-6 text-[#4b5563]">{restaurant.description}</p>
+
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {(restaurant.tags || []).map((tag) => (
+                      <span key={tag} className="rounded-md border border-[#e5e7eb] px-2.5 py-1 text-xs text-[#4b5563]">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 border-t border-[#e5e7eb] pt-4 text-sm font-semibold text-[#111827]">
+                    {restaurant.comingSoon ? 'Melumat sehifesine bax' : 'Menyunu ac'}
                   </div>
                 </div>
-                <p className="flex-1 px-4 text-sm leading-relaxed text-muted">{restaurant.description}</p>
-                <div className="flex flex-wrap gap-2 p-4">
-                  {(restaurant.tags || []).map((tag) => (
-                    <span key={tag} className="rounded-full border border-line px-2.5 py-1 text-xs text-muted">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="border-t border-line px-4 py-3 text-sm font-semibold text-accent">
-                  {restaurant.comingSoon ? 'Melumat sehifesine bax' : 'Menyunu ac'}
-                </div>
               </article>
-            );
-
-            return (
-              <Link key={restaurant.slug} to={`/${restaurant.slug}`} className="block">
-                {content}
-              </Link>
-            );
-          })}
+            </Link>
+          ))}
         </section>
       </main>
     </div>

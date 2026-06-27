@@ -84,7 +84,7 @@ export default function MenuPage() {
 
       <main className="mx-auto max-w-5xl px-4 pb-12">
         <section className="py-6 text-center">
-          <div className="mb-2 text-4xl">☕</div>
+          <img src="/coffee-logo.png" alt="" className="mx-auto mb-3 h-16 w-16 rounded-full object-cover shadow-sm" />
           <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             {tl(settings.restaurant_name) || 'Coffee In Lab'}
           </h1>

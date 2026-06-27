@@ -1,7 +1,8 @@
 import { useApp } from '../context/AppContext.jsx';
+import { assetUrl } from '../api.js';
 
 export default function RestaurantInfo() {
-  const { settings, tl, t } = useApp();
+  const { settings, tl, t, activeRestaurant, apiBase } = useApp();
 
   let hours = {};
   try { hours = JSON.parse(settings.opening_hours || '{}'); } catch { /* ignore */ }
@@ -12,7 +13,12 @@ export default function RestaurantInfo() {
       <div className="mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:grid-cols-3">
         <div id="about">
           <div className="mb-2 flex items-center gap-2 font-display text-lg font-semibold text-ink">
-            ☕ {tl(settings.restaurant_name) || 'Coffee In Lab'}
+            <img
+              src={assetUrl(settings.logo_image || activeRestaurant?.logo || '/coffee-logo.png', apiBase)}
+              alt=""
+              className="h-8 w-8 rounded-full object-cover"
+            />
+            {tl(settings.restaurant_name) || activeRestaurant?.name || 'Menyu QR'}
           </div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted">{t.tagline}</p>
           {settings.address && <p className="mt-3 text-sm text-muted">📍 {settings.address}</p>}

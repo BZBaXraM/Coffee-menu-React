@@ -5,7 +5,7 @@ import { assetUrl, dishSizes } from '../api.js';
 import { CategoryIcon } from '../categoryIcons.jsx';
 
 export default function DishCard({ dish, category, onOpen }) {
-  const { tl, formatPrice, t } = useApp();
+  const { tl, formatPrice, t, apiBase } = useApp();
   const { add } = useCart();
   const [justAdded, setJustAdded] = useState(false);
   const sizes = dishSizes(dish);
@@ -30,7 +30,7 @@ export default function DishCard({ dish, category, onOpen }) {
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-surface-2">
         {dish.image ? (
           <img
-            src={assetUrl(dish.image)}
+            src={assetUrl(dish.image, apiBase)}
             alt=""
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"

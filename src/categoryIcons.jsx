@@ -1,5 +1,6 @@
 import { Coffee, Snowflake, Star, CupSoda, Leaf, Croissant, PlusCircle } from 'lucide-react';
 import { assetUrl } from './api.js';
+import { useApp } from './context/AppContext.jsx';
 
 // Built-in professional category icons. `key` is what's stored in the DB
 // (category.icon_key); `Icon` is the lucide component rendered for it.
@@ -21,12 +22,13 @@ const ICONS = Object.fromEntries(ICON_OPTIONS.map((o) => [o.key, o.Icon]));
 //   otherwise                     -> legacy emoji (category.icon)
 // When `boxed`, the icon sits inside a small rounded cream-colored box.
 export function CategoryIcon({ category, size = 18, boxed = true, className = '' }) {
+  const { apiBase } = useApp();
   if (!category) return null;
 
   let inner;
   if (category.icon_type === 'image' && category.icon_url) {
     inner = (
-      <img src={assetUrl(category.icon_url)} alt="" style={{ width: size, height: size }} className="object-contain" />
+      <img src={assetUrl(category.icon_url, apiBase)} alt="" style={{ width: size, height: size }} className="object-contain" />
     );
   } else {
     const Lucide = category.icon_type !== 'image' ? ICONS[category.icon_key] : null;

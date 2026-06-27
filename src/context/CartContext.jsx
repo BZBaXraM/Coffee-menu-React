@@ -1,17 +1,18 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useApp } from './AppContext.jsx';
 
 const CartContext = createContext(null);
 export const useCart = () => useContext(CartContext);
 
-const KEY = 'qrmenu_cart';
+const KEY_PREFIX = 'qrmenu_cart';
 
 // Unique cart-line key: a dish with a chosen size is a distinct line from the
 // same dish in another size, so S and M live as two rows.
 const lineKey = (id, size) => (size ? `${id}::${size}` : String(id));
 
-function readCart() {
+function readCart(key) {
   try {
-    const raw = JSON.parse(localStorage.getItem(KEY) || '[]');
+    const raw = JSON.parse(localStorage.getItem(key) || '[]');
     if (!Array.isArray(raw)) return [];
     // Backfill `key` for carts persisted before size variants existed.
     return raw.map((i) => ({ ...i, key: i.key || lineKey(i.id, i.size) }));
@@ -21,11 +22,20 @@ function readCart() {
 }
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(readCart);
+  const { activeRestaurant } = useApp();
+  const storageKey = useMemo(
+    () => `${KEY_PREFIX}_${activeRestaurant?.slug || 'platform'}`,
+    [activeRestaurant?.slug],
+  );
+  const [items, setItems] = useState(() => readCart(storageKey));
 
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* ignore */ }
-  }, [items]);
+    setItems(readCart(storageKey));
+  }, [storageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(items)); } catch { /* ignore */ }
+  }, [items, storageKey]);
 
   // `size` is an optional { label, price } variant (e.g. milkshake S/M).
   const add = (dish, qty = 1, size = null) => {

@@ -6,11 +6,20 @@ export const API_BASE = (import.meta.env.VITE_API_BASE || 'https://coffee-menu.b
 // Base for REST calls, e.g. `${API_URL}/menu/dishes`.
 export const API_URL = `${API_BASE}/api`;
 
+export function apiBaseFor(restaurant) {
+  return (restaurant?.apiBase || API_BASE).replace(/\/$/, '');
+}
+
+export function apiUrlFor(restaurant) {
+  return `${apiBaseFor(restaurant)}/api`;
+}
+
 // Resolve a server-relative asset path (e.g. "/uploads/x.png") to an absolute URL.
-export function assetUrl(path) {
+export function assetUrl(path, base = API_BASE) {
   if (!path) return path;
-  if (/^https?:\/\//i.test(path)) return path;
-  return `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  if (path.startsWith('/uploads/')) return `${(base || API_BASE).replace(/\/$/, '')}${path}`;
+  return path;
 }
 
 // Parse a dish's `sizes` column (JSON array of { label, price } in AZN) into a

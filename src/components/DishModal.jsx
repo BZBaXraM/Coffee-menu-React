@@ -5,7 +5,7 @@ import { assetUrl, dishSizes } from '../api.js';
 import { CategoryIcon } from '../categoryIcons.jsx';
 
 export default function DishModal({ dish, category, onClose }) {
-  const { tl, formatPrice, t } = useApp();
+  const { tl, formatPrice, t, apiBase } = useApp();
   const { add } = useCart();
   const sizes = dishSizes(dish);
   const [size, setSize] = useState(sizes[0] || null);
@@ -34,7 +34,7 @@ export default function DishModal({ dish, category, onClose }) {
       >
         <div className="relative grid h-56 place-items-center overflow-hidden bg-surface-2 sm:h-64">
           {dish.image ? (
-            <img src={assetUrl(dish.image)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={assetUrl(dish.image, apiBase)} alt="" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             category ? <CategoryIcon category={category} size={64} boxed={false} /> : <span className="text-7xl">☕</span>
           )}

@@ -1,9 +1,10 @@
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { LANGUAGES, CURRENCIES } from '../i18n.js';
+import { assetUrl } from '../api.js';
 
 export default function Navbar({ onCartOpen, onSearch, search }) {
-  const { settings, language, setLanguage, currency, setCurrency, theme, toggleTheme, tl, t } = useApp();
+  const { settings, language, setLanguage, currency, setCurrency, theme, toggleTheme, tl, t, activeRestaurant } = useApp();
   const { count } = useCart();
 
   const showCurrency = settings.show_currency_selector !== '0';
@@ -13,7 +14,11 @@ export default function Navbar({ onCartOpen, onSearch, search }) {
     <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <img src="/coffee-logo.png" alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+          <img
+            src={assetUrl(settings.logo_image || activeRestaurant?.logo || '/coffee-logo.png', activeRestaurant?.apiBase)}
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
           <div className="min-w-0 leading-tight">
             <div className="truncate font-display text-lg font-semibold text-ink">
               {tl(settings.restaurant_name) || 'Coffee In Lab'}

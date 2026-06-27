@@ -2,7 +2,7 @@ import { assetUrl } from '../api.js';
 import { useApp } from '../context/AppContext.jsx';
 
 export default function PromotionBanner({ promotions }) {
-  const { tl, t } = useApp();
+  const { tl, t, apiBase } = useApp();
   const visible = (promotions || []).filter((promo) => promo && Number(promo.is_active) !== 0);
 
   if (visible.length === 0) return null;
@@ -21,7 +21,7 @@ export default function PromotionBanner({ promotions }) {
             <div className="flex gap-3 p-4">
               {promo.image ? (
                 <img
-                  src={assetUrl(promo.image)}
+                  src={assetUrl(promo.image, apiBase)}
                   alt=""
                   className="h-20 w-20 shrink-0 rounded-xl object-cover"
                   loading="lazy"

@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { API_URL, dishSizes } from '../api.js';
+import { assetUrl, dishSizes } from '../api.js';
 
 export default function AIChat() {
-  const { language, tl, formatPrice, t } = useApp();
+  const { language, tl, formatPrice, t, apiUrl, apiBase, activeRestaurant } = useApp();
   const { add } = useCart();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -25,7 +25,7 @@ export default function AIChat() {
     setMessages((p) => [...p, { role: 'user', content: text }]);
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/ai/chat`, {
+      const res = await fetch(`${apiUrl}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, language, history }),
@@ -38,6 +38,8 @@ export default function AIChat() {
       setLoading(false);
     }
   };
+
+  if (!apiUrl || activeRestaurant?.aiEnabled === false) return null;
 
   const quickAdd = (d) => {
     // Default to the smallest size variant when the dish has sizes.
@@ -117,7 +119,7 @@ export default function AIChat() {
                     {m.dishes.map((d) => (
                       <div key={d.id} className="flex items-center gap-2 rounded-xl border border-line bg-bg p-2">
                         <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-2 text-lg">
-                          {d.image ? <img src={d.image} alt="" className="h-full w-full rounded-lg object-cover" /> : '☕'}
+                          {d.image ? <img src={assetUrl(d.image, apiBase)} alt="" className="h-full w-full rounded-lg object-cover" /> : '☕'}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-xs font-semibold text-ink">{tl(d.name)}</div>

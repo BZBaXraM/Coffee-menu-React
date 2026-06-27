@@ -10,10 +10,23 @@ import ContactBar from '../components/ContactBar.jsx';
 import RestaurantInfo from '../components/RestaurantInfo.jsx';
 import Pagination from '../components/Pagination.jsx';
 import PromotionBanner from '../components/PromotionBanner.jsx';
-import { API_URL } from '../api.js';
+import { assetUrl } from '../api.js';
+
+function searchableText(value) {
+  if (value == null) return '';
+  if (typeof value === 'object') return Object.values(value).join(' ');
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object') return searchableText(parsed);
+    } catch { /* plain string */ }
+    return value;
+  }
+  return String(value);
+}
 
 export default function MenuPage() {
-  const { tl, t, settings } = useApp();
+  const { tl, t, settings, activeRestaurant, apiUrl } = useApp();
   const [categories, setCategories] = useState([]);
   const [dishes, setDishes] = useState([]);
   const [promotions, setPromotions] = useState([]);
@@ -27,12 +40,40 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/menu/categories`).then((r) => r.json()).then(setCategories).catch(() => {});
-  }, []);
+    setPage(1);
+    setActiveCat(null);
+    setSearch('');
+    setDebounced('');
+    setModalDish(null);
+  }, [activeRestaurant?.slug]);
 
   useEffect(() => {
-    fetch(`${API_URL}/menu/promotions`).then((r) => r.json()).then(setPromotions).catch(() => {});
-  }, []);
+    if (activeRestaurant?.menu?.categories) {
+      setCategories(activeRestaurant.menu.categories);
+      return;
+    }
+
+    if (!apiUrl) {
+      setCategories([]);
+      return;
+    }
+
+    fetch(`${apiUrl}/menu/categories`).then((r) => r.json()).then(setCategories).catch(() => {});
+  }, [activeRestaurant, apiUrl]);
+
+  useEffect(() => {
+    if (activeRestaurant?.menu?.promotions) {
+      setPromotions(activeRestaurant.menu.promotions);
+      return;
+    }
+
+    if (!apiUrl) {
+      setPromotions([]);
+      return;
+    }
+
+    fetch(`${apiUrl}/menu/promotions`).then((r) => r.json()).then(setPromotions).catch(() => {});
+  }, [activeRestaurant, apiUrl]);
 
   // debounce search
   useEffect(() => {
@@ -43,11 +84,35 @@ export default function MenuPage() {
   useEffect(() => { setPage(1); }, [activeCat, debounced]);
 
   useEffect(() => {
+    if (activeRestaurant?.menu?.dishes) {
+      setLoading(true);
+      const query = debounced.trim().toLowerCase();
+      const filtered = activeRestaurant.menu.dishes
+        .filter((dish) => !activeCat || dish.category_id === activeCat)
+        .filter((dish) => {
+          if (!query) return true;
+          return `${searchableText(dish.name)} ${searchableText(dish.description)}`.toLowerCase().includes(query);
+        });
+      const limit = 12;
+      const start = (page - 1) * limit;
+      setDishes(filtered.slice(start, start + limit));
+      setTotalPages(Math.max(1, Math.ceil(filtered.length / limit)));
+      setLoading(false);
+      return;
+    }
+
+    if (!apiUrl) {
+      setDishes([]);
+      setTotalPages(1);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '12' });
     if (activeCat) params.set('category_id', String(activeCat));
     if (debounced) params.set('search', debounced);
-    fetch(`${API_URL}/menu/dishes?${params}`)
+    fetch(`${apiUrl}/menu/dishes?${params}`)
       .then((r) => r.json())
       .then((data) => {
         setDishes(data.items || []);
@@ -55,7 +120,7 @@ export default function MenuPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [page, activeCat, debounced]);
+  }, [activeRestaurant, apiUrl, page, activeCat, debounced]);
 
   const categoryFor = useMemo(() => {
     const map = {};
@@ -90,7 +155,11 @@ export default function MenuPage() {
 
       <main className="mx-auto max-w-5xl px-4 pb-12">
         <section className="py-6 text-center">
-          <img src="/coffee-logo.png" alt="" className="mx-auto mb-3 h-16 w-16 rounded-full object-cover shadow-sm" />
+          <img
+            src={assetUrl(settings.logo_image || activeRestaurant?.logo || '/coffee-logo.png', activeRestaurant?.apiBase)}
+            alt=""
+            className="mx-auto mb-3 h-16 w-16 rounded-full object-cover shadow-sm"
+          />
           <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             {tl(settings.restaurant_name) || 'Coffee In Lab'}
           </h1>

@@ -1,6 +1,8 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useStrings } from '../i18n.js';
-import { API_URL } from '../api.js';
+import { apiBaseFor, apiUrlFor } from '../api.js';
+import { DEFAULT_RESTAURANT_SLUG, getRestaurantBySlug, restaurantSlugFromPath } from '../restaurants.js';
 
 const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
@@ -26,6 +28,15 @@ export function tl(value, language = 'az') {
 }
 
 export function AppProvider({ children }) {
+  const location = useLocation();
+  const routeSlug = restaurantSlugFromPath(location.pathname);
+  const restaurant = useMemo(
+    () => (routeSlug ? getRestaurantBySlug(routeSlug) : null),
+    [routeSlug],
+  );
+  const activeRestaurant = restaurant || getRestaurantBySlug(DEFAULT_RESTAURANT_SLUG);
+  const apiBase = activeRestaurant?.apiBase ? apiBaseFor(activeRestaurant) : null;
+  const apiUrl = activeRestaurant?.apiBase ? apiUrlFor(activeRestaurant) : null;
   const [settings, setSettings] = useState({});
   // v2 key: bumped so older cached language choices fall back to the new 'az' default.
   const [language, setLanguage] = useState(() => localStorage.getItem('qrmenu_lang_v2') || 'az');
@@ -35,13 +46,18 @@ export function AppProvider({ children }) {
   const t = useStrings(language);
 
   useEffect(() => {
-    fetch(`${API_URL}/settings/public`)
+    const baseSettings = activeRestaurant?.settings || {};
+    setSettings(baseSettings);
+
+    if (!apiUrl || location.pathname === '/') return;
+
+    fetch(`${apiUrl}/settings/public`)
       .then((r) => r.json())
       .then((s) => {
-        setSettings(s);
+        setSettings({ ...baseSettings, ...s });
       })
       .catch(() => {});
-  }, []);
+  }, [activeRestaurant, apiUrl, location.pathname]);
 
   // Theme → <html data-theme>
   useEffect(() => {
@@ -79,6 +95,11 @@ export function AppProvider({ children }) {
 
   const value = {
     settings,
+    restaurant,
+    activeRestaurant,
+    routeSlug,
+    apiBase,
+    apiUrl,
     language, setLanguage,
     currency, setCurrency,
     theme, setTheme, toggleTheme,

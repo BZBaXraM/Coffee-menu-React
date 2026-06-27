@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { API_URL } from '../api.js';
+import { assetUrl } from '../api.js';
 
 export default function CartDrawer({ open, onClose }) {
-  const { tl, formatPrice, convertPrice, currency, settings, t } = useApp();
+  const { tl, formatPrice, convertPrice, currency, settings, t, apiUrl, apiBase } = useApp();
   const { items, updateQty, remove, clear, totalAZN } = useCart();
 
   const table = useMemo(
@@ -21,18 +21,20 @@ export default function CartDrawer({ open, onClose }) {
     const text = `☕ ${header}${tableStr}\n\n${t.yourOrder}:\n${lines.join('\n')}\n\n${t.total}: ${totalStr}`;
 
     // Persist the order (best effort)
-    try {
-      await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map((i) => ({ id: i.id, name: tl(i.name), size: i.size || null, qty: i.qty, price: convertPrice(i.price) })),
-          total: convertPrice(totalAZN),
-          currency,
-          table_number: table || null,
-        }),
-      });
-    } catch { /* ignore — still open WhatsApp */ }
+    if (apiUrl) {
+      try {
+        await fetch(`${apiUrl}/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: items.map((i) => ({ id: i.id, name: tl(i.name), size: i.size || null, qty: i.qty, price: convertPrice(i.price) })),
+            total: convertPrice(totalAZN),
+            currency,
+            table_number: table || null,
+          }),
+        });
+      } catch { /* ignore — still open WhatsApp */ }
+    }
 
     const phone = (settings.whatsapp_number || '').replace(/[^\d]/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
@@ -78,7 +80,7 @@ export default function CartDrawer({ open, onClose }) {
               {items.map((i) => (
                 <li key={i.key} className="flex gap-3 rounded-xl border border-line bg-surface p-3">
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-surface-2 text-2xl">
-                    {i.image ? <img src={i.image} alt="" className="h-full w-full rounded-lg object-cover" /> : (i.icon || '☕')}
+                    {i.image ? <img src={assetUrl(i.image, apiBase)} alt="" className="h-full w-full rounded-lg object-cover" /> : (i.icon || '☕')}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-ink">

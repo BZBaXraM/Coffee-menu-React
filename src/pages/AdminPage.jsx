@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { ImageIcon } from 'lucide-react';
 import { useApp, tl } from '../context/AppContext.jsx';
 import { LANGUAGES } from '../i18n.js';
@@ -576,67 +576,214 @@ function PromotionsTab({ headers }) {
 }
 
 // ---------- Orders ----------
+const ORDER_STATUSES = ['new', 'preparing', 'ready', 'done', 'cancelled'];
+const ORDER_DATES = ['today', 'yesterday', 'month', 'all'];
+const STATUS_BADGE = {
+  new: 'border-accent text-accent',
+  preparing: 'border-blue-500/40 text-blue-600',
+  ready: 'border-indigo-500/40 text-indigo-600',
+  done: 'border-green-500/40 text-green-600',
+  cancelled: 'border-red-500/40 text-red-600',
+};
+
+// Short beep via the Web Audio API — no asset file needed.
+function playOrderChime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const beep = (freq, start, dur) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const t0 = ctx.currentTime + start;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.3, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.start(t0);
+      osc.stop(t0 + dur);
+    };
+    beep(880, 0, 0.18);
+    beep(1175, 0.16, 0.22);
+    setTimeout(() => ctx.close(), 600);
+  } catch { /* ignore */ }
+}
+
 function OrdersTab({ headers }) {
   const { t } = useAdminLang();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [status, setStatusFilter] = useState('all'); // 'all' | one of ORDER_STATUSES
+  const [date, setDate] = useState('today');          // one of ORDER_DATES
+  const [stats, setStats] = useState(null);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
   const statusLabels = { new: t.statusNew, preparing: t.statusPreparing, ready: t.statusReady, done: t.statusDone, cancelled: t.statusCancelled };
 
-  const load = useCallback((p = page) => {
-    fetch(`${API_URL}/admin/orders?page=${p}&limit=20`, { headers: headers() })
-      .then((r) => r.json()).then((d) => { setItems(d.items || []); setTotalPages(d.totalPages || 1); });
-  }, [page, headers]);
+  const query = useCallback((p) => {
+    const params = new URLSearchParams({ page: p, limit: '20' });
+    if (status !== 'all') params.set('status', status);
+    if (date !== 'all') params.set('date', date);
+    return params.toString();
+  }, [status, date]);
 
+  const loadStats = useCallback(() => {
+    const d = date === 'all' ? 'today' : date;
+    fetch(`${API_URL}/admin/orders/stats?date=${d}`, { headers: headers() })
+      .then((r) => r.json()).then(setStats).catch(() => { /* ignore */ });
+  }, [date, headers]);
+
+  const load = useCallback((p = page) => {
+    fetch(`${API_URL}/admin/orders?${query(p)}`, { headers: headers() })
+      .then((r) => r.json()).then((d) => { setItems(d.items || []); setTotalPages(d.totalPages || 1); });
+    loadStats();
+  }, [page, headers, query, loadStats]);
+
+  // Reset to page 1 whenever the filters change.
+  useEffect(() => { setPage(1); }, [status, date]);
   useEffect(() => { load(page); }, [page, load]);
 
-  // live updates
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 6000);
+  }, []);
+
+  // live updates: chime + popup on every new order, then refresh the list
   useEffect(() => {
     let ws;
     try {
       ws = new WebSocket(wsUrl('/ws'));
       ws.onmessage = (ev) => {
-        try { if (JSON.parse(ev.data).type === 'new_order') { setPage(1); load(1); } } catch { /* ignore */ }
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type !== 'new_order') return;
+          playOrderChime();
+          const table = msg.order?.table_number;
+          showToast(`${t.newOrderToast}${table ? ` — ${t.table} ${table}` : ''}`);
+          setPage(1);
+          load(1);
+        } catch { /* ignore */ }
       };
     } catch { /* ignore */ }
     return () => ws?.close();
-  }, [load]);
+  }, [load, showToast, t]);
 
-  const setStatus = async (id, status) => {
-    await fetch(`${API_URL}/admin/orders/${id}/status`, { method: 'PUT', headers: headers(true), body: JSON.stringify({ status }) });
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+  const setStatus = async (id, value) => {
+    await fetch(`${API_URL}/admin/orders/${id}/status`, { method: 'PUT', headers: headers(true), body: JSON.stringify({ status: value }) });
     load(page);
   };
+
+  const chip = (active) => `rounded-full px-3 py-1 text-xs font-medium transition-colors ${active ? 'bg-accent text-accent-ink' : 'border border-line bg-bg text-ink'}`;
 
   return (
     <div>
       <h2 className="mb-4 font-display text-xl font-bold text-ink">{t.orders}</h2>
+
+      {/* stats */}
+      {stats && (
+        <div className="mb-4 grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-line bg-surface p-3 text-center">
+            <div className="text-lg font-bold text-ink">{stats.count}</div>
+            <div className="text-[11px] text-muted">{t.statOrders}</div>
+          </div>
+          <div className="rounded-xl border border-line bg-surface p-3 text-center">
+            <div className="text-lg font-bold text-ink">{stats.revenue} {stats.currency}</div>
+            <div className="text-[11px] text-muted">{t.statRevenue}</div>
+          </div>
+          <div className="rounded-xl border border-line bg-surface p-3 text-center">
+            <div className="text-lg font-bold text-accent">{stats.newCount}</div>
+            <div className="text-[11px] text-muted">{t.statNew}</div>
+          </div>
+        </div>
+      )}
+
+      {/* status filter */}
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        <button onClick={() => setStatusFilter('all')} className={chip(status === 'all')}>{t.filterAll}</button>
+        {ORDER_STATUSES.map((s) => (
+          <button key={s} onClick={() => setStatusFilter(s)} className={chip(status === s)}>{statusLabels[s]}</button>
+        ))}
+      </div>
+
+      {/* date filter */}
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        {ORDER_DATES.map((d) => (
+          <button key={d} onClick={() => setDate(d)} className={chip(date === d)}>
+            {{ today: t.dateToday, yesterday: t.dateYesterday, month: t.dateMonth, all: t.dateAll }[d]}
+          </button>
+        ))}
+      </div>
+
       <div className="grid gap-2">
         {items.length === 0 && <p className="text-muted">{t.noOrders}</p>}
         {items.map((o) => {
           let list = [];
           try { list = JSON.parse(o.items); } catch { /* ignore */ }
+          const cardClass =
+            o.status === 'cancelled' ? 'border-red-500/30 bg-red-500/5 opacity-75'
+            : o.status === 'done' ? 'border-green-500/40 bg-green-500/5'
+            : o.status === 'new' ? 'border-accent ring-1 ring-accent bg-surface'
+            : 'border-line bg-surface';
+          const active = o.status === 'new' || o.status === 'preparing' || o.status === 'ready';
           return (
-            <div key={o.id} className="rounded-xl border border-line bg-surface p-3">
+            <div key={o.id} className={`rounded-xl border p-3 ${cardClass}`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold text-ink">#{o.id} · {o.total} {o.currency}</div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted" title={o.table_number ? t.fromQr : ''}>
                     {o.table_number ? `🪑 #${o.table_number} (QR)` : '—'}
                   </span>
-                  <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)} className="rounded-lg border border-line bg-bg px-2 py-1 text-xs text-ink">
-                    {['new', 'preparing', 'ready', 'done', 'cancelled'].map((s) => <option key={s} value={s}>{statusLabels[s]}</option>)}
-                  </select>
+                  <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE[o.status] || 'border-line text-muted'}`}>
+                    {statusLabels[o.status] || o.status}
+                  </span>
                 </div>
               </div>
               <ul className="mt-1 text-xs text-muted">
                 {list.map((it, i) => <li key={i}>• {it.name} ×{it.qty}</li>)}
               </ul>
               <div className="mt-1 text-[11px] text-muted">{new Date(o.created_at).toLocaleString()}</div>
+              {active && (
+                <div className="mt-3 flex gap-2">
+                  {o.status === 'new' && (
+                    <>
+                      <button onClick={() => setStatus(o.id, 'preparing')} className="flex-1 rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-accent-ink transition-transform active:scale-[0.98]">
+                        ✓ {t.btnAccept}
+                      </button>
+                      <button onClick={() => setStatus(o.id, 'cancelled')} className="flex-1 rounded-lg border border-red-500/40 px-3 py-2.5 text-sm font-semibold text-red-600 transition-transform active:scale-[0.98]">
+                        ✕ {t.btnCancel}
+                      </button>
+                    </>
+                  )}
+                  {(o.status === 'preparing' || o.status === 'ready') && (
+                    <button onClick={() => setStatus(o.id, 'done')} className="flex-1 rounded-lg bg-green-600 px-3 py-2.5 text-sm font-semibold text-white transition-transform active:scale-[0.98]">
+                      ✓ {t.btnDeliver}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+
+      {/* new-order popup */}
+      {toast && (
+        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-xl border border-accent bg-surface px-4 py-3 shadow-lg">
+            <span className="text-lg">🔔</span>
+            <span className="text-sm font-semibold text-ink">{toast}</span>
+            <button onClick={() => setToast(null)} className="ml-2 text-muted hover:text-ink">✕</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

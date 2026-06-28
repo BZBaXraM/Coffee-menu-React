@@ -5,6 +5,7 @@ import CategoryFilter from '../components/CategoryFilter.jsx';
 import DishCard from '../components/DishCard.jsx';
 import DishModal from '../components/DishModal.jsx';
 import CartDrawer from '../components/CartDrawer.jsx';
+import CartBar from '../components/CartBar.jsx';
 import AIChat from '../components/AIChat.jsx';
 import ContactBar from '../components/ContactBar.jsx';
 import RestaurantInfo from '../components/RestaurantInfo.jsx';
@@ -150,8 +151,8 @@ export default function MenuPage() {
   );
 
   return (
-    <div className="min-h-screen bg-bg">
-      <Navbar onCartOpen={() => setCartOpen(true)} onSearch={setSearch} search={search} />
+    <div className="min-h-screen bg-bg pb-28">
+      <Navbar onSearch={setSearch} search={search} />
 
       <main className="mx-auto max-w-5xl px-4 pb-12">
         <section className="py-6 text-center">
@@ -196,6 +197,7 @@ export default function MenuPage() {
       <RestaurantInfo />
 
       <AIChat />
+      <CartBar onOpen={() => setCartOpen(true)} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       {modalDish && (
         <DishModal dish={modalDish} category={categoryFor(modalDish.category_id)} onClose={() => setModalDish(null)} />

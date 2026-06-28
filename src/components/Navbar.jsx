@@ -1,11 +1,9 @@
 import { useApp } from '../context/AppContext.jsx';
-import { useCart } from '../context/CartContext.jsx';
 import { LANGUAGES, CURRENCIES } from '../i18n.js';
 import { assetUrl } from '../api.js';
 
-export default function Navbar({ onCartOpen, onSearch, search }) {
+export default function Navbar({ onSearch, search }) {
   const { settings, language, setLanguage, currency, setCurrency, theme, toggleTheme, tl, t, activeRestaurant } = useApp();
-  const { count } = useCart();
 
   const showCurrency = settings.show_currency_selector !== '0';
   const showLang = settings.show_language_selector !== '0';
@@ -64,18 +62,6 @@ export default function Navbar({ onCartOpen, onSearch, search }) {
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <button
-            onClick={onCartOpen}
-            className="relative grid h-9 w-9 place-items-center rounded-lg bg-accent text-base text-accent-ink"
-            aria-label={t.cart}
-          >
-            🛒
-            {count > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1 text-[10px] font-bold text-bg">
-                {count}
-              </span>
-            )}
           </button>
         </div>
       </div>

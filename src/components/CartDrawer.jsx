@@ -40,62 +40,58 @@ export default function CartDrawer({ open, onClose }) {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  if (!open) return null;
+
   return (
-    <>
-      <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-        onClick={onClose}
-      />
-      <aside
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-bg shadow-2xl transition-transform duration-300 ${
-          open ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between border-b border-line px-4 py-4">
-          <h2 className="font-display text-xl font-bold text-ink">🛒 {t.cart}</h2>
-          <div className="flex items-center gap-2">
-            {items.length > 0 && (
-              <button onClick={clear} className="text-xs font-medium text-muted underline">{t.clear}</button>
-            )}
-            <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full bg-surface text-ink">✕</button>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      <div className="relative flex max-h-[88vh] w-full max-w-lg animate-[cartbar-in_0.25s_ease-out] flex-col overflow-hidden rounded-t-3xl bg-surface shadow-2xl sm:max-h-[85vh] sm:rounded-3xl">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h2 className="font-display text-2xl font-bold text-ink">🛒 {t.cart}</h2>
+          <button
+            onClick={onClose}
+            className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface text-lg text-ink transition hover:bg-surface-2"
+            aria-label={t.close}
+          >
+            ✕
+          </button>
         </div>
 
         {table && (
-          <div className="border-b border-line bg-surface-2 px-4 py-2 text-xs font-medium text-muted">
+          <div className="border-b border-line bg-surface-2 px-5 py-2 text-xs font-medium text-muted">
             🪑 {t.table}: <span className="text-ink">#{table}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto px-5">
           {items.length === 0 ? (
-            <div className="grid h-full place-items-center text-center text-muted">
+            <div className="grid place-items-center py-16 text-center text-muted">
               <div>
                 <div className="mb-2 text-5xl opacity-40">☕</div>
                 <p className="text-sm">{t.emptyCart}</p>
               </div>
             </div>
           ) : (
-            <ul className="space-y-3">
+            <ul className="divide-y divide-line">
               {items.map((i) => (
-                <li key={i.key} className="flex gap-3 rounded-xl border border-line bg-surface p-3">
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-surface-2 text-2xl">
-                    {i.image ? <img src={assetUrl(i.image, apiBase)} alt="" className="h-full w-full rounded-lg object-cover" /> : (i.icon || '☕')}
+                <li key={i.key} className="flex items-center gap-3 py-4">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface-2 text-2xl">
+                    {i.image ? <img src={assetUrl(i.image, apiBase)} alt="" className="h-full w-full object-cover" /> : (i.icon || '☕')}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-ink">
+                    <div className="truncate font-display text-base font-semibold text-ink">
                       {tl(i.name)}
                       {i.size ? <span className="ml-1 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-muted">{i.size}</span> : null}
                     </div>
-                    <div className="text-xs text-accent">{formatPrice(i.price)}</div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <button onClick={() => updateQty(i.key, i.qty - 1)} className="grid h-6 w-6 place-items-center rounded-md bg-surface-2 text-ink">−</button>
-                      <span className="w-6 text-center text-sm font-semibold text-ink">{i.qty}</span>
-                      <button onClick={() => updateQty(i.key, i.qty + 1)} className="grid h-6 w-6 place-items-center rounded-md bg-surface-2 text-ink">+</button>
-                      <button onClick={() => remove(i.key)} className="ml-auto text-xs text-muted">🗑</button>
-                    </div>
+                    <div className="text-sm text-muted">{formatPrice(i.price)}</div>
                   </div>
-                  <div className="whitespace-nowrap text-sm font-bold text-ink">{formatPrice(i.price * i.qty)}</div>
+                  <div className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-surface-2 px-1">
+                    <button onClick={() => updateQty(i.key, i.qty - 1)} className="grid h-8 w-8 place-items-center rounded-full text-lg text-ink transition hover:bg-surface" aria-label="−">−</button>
+                    <span className="w-6 text-center text-sm font-bold text-ink">{i.qty}</span>
+                    <button onClick={() => updateQty(i.key, i.qty + 1)} className="grid h-8 w-8 place-items-center rounded-full text-lg text-ink transition hover:bg-surface" aria-label="+">+</button>
+                  </div>
+                  <div className="w-16 shrink-0 text-right font-display text-base font-bold text-accent">{formatPrice(i.price * i.qty)}</div>
                 </li>
               ))}
             </ul>
@@ -103,20 +99,26 @@ export default function CartDrawer({ open, onClose }) {
         </div>
 
         {items.length > 0 && (
-          <div className="border-t border-line p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-muted">{t.total}</span>
-              <span className="font-display text-2xl font-bold text-ink">{formatPrice(totalAZN)}</span>
+          <div className="border-t border-line px-5 py-4">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-base text-muted">{t.grandTotal}</span>
+              <span className="font-display text-3xl font-bold text-accent">{formatPrice(totalAZN)}</span>
             </div>
             <button
-              onClick={submitOrder}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-semibold text-white active:scale-[0.99]"
+              onClick={clear}
+              className="mb-3 w-full rounded-full border border-line bg-surface py-3.5 font-semibold text-ink transition hover:bg-surface-2"
             >
-              <span className="text-lg">💬</span> {t.order}
+              🗑 {t.clearCart}
+            </button>
+            <button
+              onClick={submitOrder}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#25D366] to-[#1da851] py-4 text-lg font-semibold text-white shadow-lg transition active:scale-[0.99]"
+            >
+              <span className="text-xl">💬</span> {t.orderViaWhatsapp}
             </button>
           </div>
         )}
-      </aside>
-    </>
+      </div>
+    </div>
   );
 }

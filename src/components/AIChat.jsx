@@ -5,7 +5,7 @@ import { assetUrl, dishSizes } from '../api.js';
 
 export default function AIChat() {
   const { language, tl, formatPrice, t, apiUrl, apiBase, activeRestaurant } = useApp();
-  const { add } = useCart();
+  const { add, count } = useCart();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
@@ -50,7 +50,7 @@ export default function AIChat() {
 
   return (
     <>
-      <div className="group fixed bottom-5 right-5 z-40">
+      <div className={`group fixed right-5 z-40 transition-[bottom] ${count > 0 ? 'bottom-24 sm:bottom-5' : 'bottom-5'}`}>
         {!open && (
           <span className="pointer-events-none absolute right-full top-1/2 mr-3 flex -translate-y-1/2 flex-col whitespace-nowrap rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-right text-white opacity-100 shadow-lg transition">
             <span className="text-xs font-semibold leading-tight">{t.askAI}</span>
@@ -67,7 +67,7 @@ export default function AIChat() {
       </div>
 
       {open && (
-        <div className="fixed bottom-24 right-5 z-40 flex h-[28rem] w-[min(22rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
+        <div className={`fixed right-5 z-40 flex h-[28rem] w-[min(22rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl ${count > 0 ? 'bottom-44 sm:bottom-24' : 'bottom-24'}`}>
           <div className="flex items-center gap-3 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-white">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-xl">✨</span>
             <div className="min-w-0 flex-1 leading-tight">

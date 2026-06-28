@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { ImageIcon } from 'lucide-react';
 import { useApp, tl } from '../context/AppContext.jsx';
 import { LANGUAGES } from '../i18n.js';
 import Pagination from '../components/Pagination.jsx';
@@ -359,22 +360,37 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
             </label>
           ))}
         </div>
-        <label className="block">
+        <div className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{t.photoOptional}</span>
-          {(file || form.image) && (
-            <div className="mb-2 flex items-center gap-3">
-              <img src={file ? URL.createObjectURL(file) : assetUrl(form.image)} alt="" className="h-16 w-16 rounded-lg object-cover" />
-              <button
-                type="button"
-                onClick={() => { setFile(null); set('image', ''); }}
-                className="rounded-lg border border-line px-2 py-1 text-xs text-red-500"
-              >
-                {t.removePhoto}
-              </button>
+          {(file || form.image) ? (
+            <div className="flex items-center gap-3 rounded-xl border border-line bg-surface-2 p-3">
+              <img src={file ? URL.createObjectURL(file) : assetUrl(form.image)} alt="" className="h-24 w-24 shrink-0 rounded-lg object-cover" />
+              <div className="min-w-0 flex-1">
+                {file && <div className="truncate text-sm font-medium text-ink">{file.name}</div>}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <label className="cursor-pointer rounded-lg border border-line px-2 py-1 text-xs text-ink hover:border-accent">
+                    {t.edit}
+                    <input type="file" accept="image/*" onChange={(e) => e.target.files[0] && setFile(e.target.files[0])} className="hidden" />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => { setFile(null); set('image', ''); }}
+                    className="rounded-lg border border-line px-2 py-1 text-xs text-red-500"
+                  >
+                    {t.removePhoto}
+                  </button>
+                </div>
+              </div>
             </div>
+          ) : (
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line bg-surface-2 px-4 py-6 text-center transition-colors hover:border-accent">
+              <ImageIcon size={28} className="text-muted" />
+              <span className="text-sm font-medium text-ink">{t.uploadHint}</span>
+              <span className="text-[11px] text-muted">{t.uploadFormats}</span>
+              <input type="file" accept="image/*" onChange={(e) => e.target.files[0] && setFile(e.target.files[0])} className="hidden" />
+            </label>
           )}
-          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} className="text-sm text-ink" />
-        </label>
+        </div>
         <div className="flex gap-2 pt-2">
           <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">{t.cancel}</button>
           <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">{t.save}</button>
@@ -626,25 +642,40 @@ function OrdersTab({ headers }) {
 }
 
 // ---------- Settings ----------
+const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
 function SettingsTab({ headers }) {
   const { t } = useAdminLang();
   const [s, setS] = useState(null);
+  const [hours, setHours] = useState({});
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/settings`, { headers: headers() })
       .then((r) => r.json())
-      .then((d) => { delete d.admin_password; setS(d); }); // don't prefill the password
+      .then((d) => {
+        delete d.admin_password; // don't prefill the password
+        let parsed = {};
+        try { parsed = JSON.parse(d.opening_hours || '{}'); } catch { /* ignore */ }
+        setHours(parsed && typeof parsed === 'object' ? parsed : {});
+        setS(d);
+      });
   }, [headers]);
   if (!s) return <p className="text-muted">{t.loading}</p>;
 
   const set = (k, v) => setS((p) => ({ ...p, [k]: v }));
+  const setDay = (day, v) => setHours((p) => ({ ...p, [day]: v }));
   const name = parseML(s.restaurant_name);
 
   const save = async (e) => {
     e.preventDefault();
-    const body = { ...s, restaurant_name: JSON.stringify(name) };
-    delete body.whatsapp_number; // fixed, not editable
+    // Keep only non-empty days so a blank field hides that day on the menu.
+    const cleanHours = {};
+    for (const day of WEEKDAYS) {
+      const v = (hours[day] || '').trim();
+      if (v) cleanHours[day] = v;
+    }
+    const body = { ...s, restaurant_name: JSON.stringify(name), opening_hours: JSON.stringify(cleanHours) };
     await fetch(`${API_URL}/settings`, { method: 'PUT', headers: headers(true), body: JSON.stringify(body) });
     setSaved(true); setTimeout(() => setSaved(false), 1500);
   };
@@ -666,9 +697,30 @@ function SettingsTab({ headers }) {
         <Field label={t.menuUrl} value={s.menu_url || ''} onChange={(e) => set('menu_url', e.target.value)} />
         <Field label={t.newAdminPassword} type="password" placeholder={t.leaveBlank} value={s.admin_password || ''} onChange={(e) => set('admin_password', e.target.value)} />
       </div>
-      <div className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs text-muted">
-        🔒 {t.whatsappFixed} <span className="font-semibold text-ink">{s.whatsapp_number}</span>
+
+      <div>
+        <Field label={t.whatsapp} value={s.whatsapp_number || ''} onChange={(e) => set('whatsapp_number', e.target.value)} placeholder="+994..." />
+        <p className="mt-1 text-[11px] text-muted">{t.whatsappHint}</p>
       </div>
+
+      <div>
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">{t.workingHours}</div>
+        <div className="space-y-2 rounded-xl border border-line bg-surface-2 p-3">
+          {WEEKDAYS.map((day) => (
+            <div key={day} className="flex items-center gap-3">
+              <span className="w-28 shrink-0 text-sm text-ink">{t[day]}</span>
+              <input
+                value={hours[day] || ''}
+                onChange={(e) => setDay(day, e.target.value)}
+                placeholder="08:00–22:00"
+                className="flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+              />
+            </div>
+          ))}
+        </div>
+        <p className="mt-1 text-[11px] text-muted">{t.hoursHint}</p>
+      </div>
+
       <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-accent-ink">{saved ? t.saved : t.saveSettings}</button>
     </form>
   );

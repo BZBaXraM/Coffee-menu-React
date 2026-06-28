@@ -576,7 +576,9 @@ function PromotionsTab({ headers }) {
 }
 
 // ---------- Orders ----------
-const ORDER_STATUSES = ['new', 'preparing', 'ready', 'done', 'cancelled'];
+// Filter buttons / workflow statuses (no separate "ready" step: new → preparing → done).
+// Legacy "ready" orders still display via STATUS_BADGE / statusLabels.
+const ORDER_STATUSES = ['new', 'preparing', 'done', 'cancelled'];
 const ORDER_DATES = ['today', 'yesterday', 'month', 'all'];
 const STATUS_BADGE = {
   new: 'border-accent text-accent',
@@ -621,6 +623,7 @@ function OrdersTab({ headers }) {
   const [date, setDate] = useState('today');          // one of ORDER_DATES
   const [stats, setStats] = useState(null);
   const [toast, setToast] = useState(null);
+  const [cancelId, setCancelId] = useState(null); // order pending cancel confirmation
   const toastTimer = useRef(null);
   const statusLabels = { new: t.statusNew, preparing: t.statusPreparing, ready: t.statusReady, done: t.statusDone, cancelled: t.statusCancelled };
 
@@ -686,20 +689,24 @@ function OrdersTab({ headers }) {
     <div>
       <h2 className="mb-4 font-display text-xl font-bold text-ink">{t.orders}</h2>
 
-      {/* stats */}
+      {/* stats — Orders / Revenue (delivered only) / New / Delivered */}
       {stats && (
-        <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div className="rounded-xl border border-line bg-surface p-3 text-center">
             <div className="text-lg font-bold text-ink">{stats.count}</div>
             <div className="text-[11px] text-muted">{t.statOrders}</div>
           </div>
-          <div className="rounded-xl border border-line bg-surface p-3 text-center">
-            <div className="text-lg font-bold text-ink">{stats.revenue} {stats.currency}</div>
+          <div className="rounded-xl border border-green-500/40 bg-green-500/5 p-3 text-center">
+            <div className="text-lg font-bold text-green-600">{stats.revenue} {stats.currency}</div>
             <div className="text-[11px] text-muted">{t.statRevenue}</div>
           </div>
           <div className="rounded-xl border border-line bg-surface p-3 text-center">
             <div className="text-lg font-bold text-accent">{stats.newCount}</div>
             <div className="text-[11px] text-muted">{t.statNew}</div>
+          </div>
+          <div className="rounded-xl border border-line bg-surface p-3 text-center">
+            <div className="text-lg font-bold text-green-600">{stats.deliveredCount}</div>
+            <div className="text-[11px] text-muted">{t.statDelivered}</div>
           </div>
         </div>
       )}
@@ -734,16 +741,16 @@ function OrdersTab({ headers }) {
           const active = o.status === 'new' || o.status === 'preparing' || o.status === 'ready';
           return (
             <div key={o.id} className={`rounded-xl border p-3 ${cardClass}`}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-sm font-semibold text-ink">#{o.id} · {o.total} {o.currency}</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted" title={o.table_number ? t.fromQr : ''}>
-                    {o.table_number ? `🪑 #${o.table_number} (QR)` : '—'}
-                  </span>
-                  <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE[o.status] || 'border-line text-muted'}`}>
-                    {statusLabels[o.status] || o.status}
-                  </span>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold text-ink">{t.orderNo} #{o.id} · {o.total} {o.currency}</div>
+                  <div className="mt-0.5 text-xs font-medium text-muted" title={o.table_number ? t.fromQr : ''}>
+                    {o.table_number ? `🪑 ${t.table} ${o.table_number} · QR` : `📱 ${t.qrOrder}`}
+                  </div>
                 </div>
+                <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE[o.status] || 'border-line text-muted'}`}>
+                  {statusLabels[o.status] || o.status}
+                </span>
               </div>
               <ul className="mt-1 text-xs text-muted">
                 {list.map((it, i) => <li key={i}>• {it.name} ×{it.qty}</li>)}
@@ -756,7 +763,7 @@ function OrdersTab({ headers }) {
                       <button onClick={() => setStatus(o.id, 'preparing')} className="flex-1 rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-accent-ink transition-transform active:scale-[0.98]">
                         ✓ {t.btnAccept}
                       </button>
-                      <button onClick={() => setStatus(o.id, 'cancelled')} className="flex-1 rounded-lg border border-red-500/40 px-3 py-2.5 text-sm font-semibold text-red-600 transition-transform active:scale-[0.98]">
+                      <button onClick={() => setCancelId(o.id)} className="flex-1 rounded-lg border border-red-500/40 px-3 py-2.5 text-sm font-semibold text-red-600 transition-transform active:scale-[0.98]">
                         ✕ {t.btnCancel}
                       </button>
                     </>
@@ -773,6 +780,29 @@ function OrdersTab({ headers }) {
         })}
       </div>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+
+      {/* cancel confirmation */}
+      {cancelId !== null && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setCancelId(null)}>
+          <div className="w-full max-w-xs rounded-2xl border border-line bg-surface p-5 text-center shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <p className="mb-4 text-sm font-semibold text-ink">{t.cancelConfirm}</p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { setStatus(cancelId, 'cancelled'); setCancelId(null); }}
+                className="w-full rounded-lg bg-red-600 px-3 py-2.5 text-sm font-semibold text-white transition-transform active:scale-[0.98]"
+              >
+                {t.cancelYes}
+              </button>
+              <button
+                onClick={() => setCancelId(null)}
+                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm font-semibold text-ink transition-transform active:scale-[0.98]"
+              >
+                {t.cancelNo}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* new-order popup */}
       {toast && (

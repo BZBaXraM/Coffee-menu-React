@@ -30,8 +30,17 @@ export default function LandingPage() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2" aria-label="Restaurants">
-          {restaurants.map((restaurant) => (
-            <Link key={restaurant.slug} to={`/${restaurant.slug}`} className="block">
+          {restaurants.map((restaurant) => {
+            // Entries with `href` are separate apps bundled at a subpath (e.g. the
+            // Driver Game Center under /driver-game-center/) — use a real anchor so
+            // the browser does a full navigation and nginx serves that app, rather
+            // than a client-side <Link> that the Menyu QR router would handle.
+            const Wrapper = restaurant.href ? 'a' : Link;
+            const wrapperProps = restaurant.href
+              ? { href: restaurant.href }
+              : { to: `/${restaurant.slug}` };
+            return (
+            <Wrapper key={restaurant.slug} {...wrapperProps} className="block">
               <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-[#d9dde3] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#b8c0cc] hover:shadow-md">
                 <div className="grid h-44 place-items-center border-b border-[#e5e7eb] bg-[#f9fafb] p-5">
                   <img
@@ -75,8 +84,9 @@ export default function LandingPage() {
                   </div>
                 </div>
               </article>
-            </Link>
-          ))}
+            </Wrapper>
+            );
+          })}
         </section>
       </main>
     </div>

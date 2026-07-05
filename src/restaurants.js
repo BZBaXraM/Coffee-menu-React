@@ -25,12 +25,14 @@ export const restaurants = [
     slug: 'driver-game-center',
     name: 'Driver Game Center',
     category: 'Oyun klubu',
-    description: 'Simulyasiya, yaris ve oyun klubu. Tezlikle platformada olacaq.',
+    description: 'Simulyasiya, yaris ve oyun klubu. Kabinetler, oyun setleri ve qelyan menyusu.',
     logo: '/driver-game-center-logo.svg',
     accentColor: '#0A84FF',
-    tags: ['Oyun klubu', 'Simulyasiya', 'Tezlikle'],
-    aiEnabled: false,
-    comingSoon: true,
+    tags: ['Oyun klubu', 'Kabinetler', 'Qelyan'],
+    // Served as its own SPA bundled under /driver-game-center/ (see nginx.conf).
+    // `href` makes the landing card a full-page navigation so nginx serves that
+    // app instead of the in-app React route.
+    href: '/driver-game-center/',
   },
 ];
 

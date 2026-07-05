@@ -21,6 +21,17 @@ export const restaurants = [
       logo_image: '/coffee-logo.png',
     },
   },
+  {
+    slug: 'driver-game-center',
+    name: 'Driver Game Center',
+    category: 'Oyun klubu',
+    description: 'Simulyasiya, yaris ve oyun klubu. Tezlikle platformada olacaq.',
+    logo: '/driver-game-center-logo.svg',
+    accentColor: '#0A84FF',
+    tags: ['Oyun klubu', 'Simulyasiya', 'Tezlikle'],
+    aiEnabled: false,
+    comingSoon: true,
+  },
 ];
 
 export function getRestaurantBySlug(slug) {

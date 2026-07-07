@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /driver-game-center/admin
-
-Sitemap: https://www.menyuqr.com/driver-game-center/sitemap.xml

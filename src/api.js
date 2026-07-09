@@ -54,6 +54,33 @@ export async function api(path, opts = {}) {
   return res.json();
 }
 
+// Send a FormData body while reporting upload progress — fetch() can't report
+// request-body progress, so this uses XMLHttpRequest. `onProgress` receives an
+// integer 0–100. Resolves with the parsed JSON response, rejects on HTTP errors.
+export function sendForm(url, { method = 'POST', headers = {}, body, onProgress } = {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url);
+    Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
+    if (onProgress && xhr.upload) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); } catch { resolve(null); }
+      } else {
+        let msg = `HTTP ${xhr.status}`;
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch { /* ignore */ }
+        reject(new Error(msg));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(body);
+  });
+}
+
 export function adminHeaders(pw, extra = {}) {
   return { 'x-admin-password': pw || '', ...extra };
 }

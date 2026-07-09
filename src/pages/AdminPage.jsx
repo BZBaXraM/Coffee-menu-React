@@ -3,7 +3,7 @@ import { ImageIcon } from 'lucide-react';
 import { useApp, tl } from '../context/AppContext.jsx';
 import { LANGUAGES } from '../i18n.js';
 import Pagination from '../components/Pagination.jsx';
-import { API_URL, assetUrl, wsUrl } from '../api.js';
+import { API_URL, assetUrl, wsUrl, sendForm } from '../api.js';
 import { AdminLangProvider, useAdminLang, ADMIN_LANG_CODES } from '../adminStrings.jsx';
 import { CategoryIcon, ICON_OPTIONS } from '../categoryIcons.jsx';
 
@@ -219,7 +219,7 @@ function DishesTab({ headers }) {
 
   const blank = { name: { en: '' }, description: { en: '' }, ingredients: { en: '' }, price: '', category_id: cats[0]?.id || '', calories: '', weight: '', sizes: '[]', is_featured: 0, is_available: 1 };
 
-  const save = async (form, file) => {
+  const save = async (form, file, onProgress) => {
     const fd = new FormData();
     fd.append('name', JSON.stringify(form.name));
     fd.append('description', JSON.stringify(form.description));
@@ -237,7 +237,7 @@ function DishesTab({ headers }) {
     else fd.append('image', form.image ?? '');
     const method = form.id ? 'PUT' : 'POST';
     const url = form.id ? `${API_URL}/admin/dishes/${form.id}` : `${API_URL}/admin/dishes`;
-    await fetch(url, { method, headers: headers(), body: fd });
+    await sendForm(url, { method, headers: headers(), body: fd, onProgress });
     setEditing(null); load();
   };
 
@@ -279,7 +279,22 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
   const { t, lang } = useAdminLang();
   const [form, setForm] = useState(initial);
   const [file, setFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (saving) return;
+    setSaving(true); setUploadPct(0);
+    try {
+      await onSave(form, file, setUploadPct);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Size variants (e.g. milkshake S/M). Stored on the dish as a JSON string.
   const [sizes, setSizes] = useState(() => {
@@ -302,7 +317,7 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onCancel}>
       <form
         onClick={(e) => e.stopPropagation()}
-        onSubmit={(e) => { e.preventDefault(); onSave(form, file); }}
+        onSubmit={submit}
         className="max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-2xl bg-surface p-5"
       >
         <h3 className="font-display text-lg font-bold text-ink">{form.id ? t.editTitle : t.newTitle} · {t.drink}</h3>
@@ -391,11 +406,28 @@ function DishForm({ form: initial, cats, onCancel, onSave }) {
             </label>
           )}
         </div>
+        {saving && file && <UploadProgress pct={uploadPct} />}
         <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">{t.cancel}</button>
-          <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">{t.save}</button>
+          <button type="button" onClick={onCancel} disabled={saving} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink disabled:opacity-50">{t.cancel}</button>
+          <button disabled={saving} className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink disabled:opacity-50">{saving ? t.saving : t.save}</button>
         </div>
       </form>
+    </div>
+  );
+}
+
+// Thin bar shown while a photo is being sent to the server.
+function UploadProgress({ pct }) {
+  const { t } = useAdminLang();
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-[11px] font-medium text-muted">
+        <span>{t.uploadingPhoto}</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
@@ -409,7 +441,7 @@ function CategoriesTab({ headers }) {
   const load = useCallback(() => fetch(`${API_URL}/admin/categories`, { headers: headers() }).then((r) => r.json()).then(setItems), [headers]);
   useEffect(() => { load(); }, [load]);
 
-  const save = async (form, file) => {
+  const save = async (form, file, onProgress) => {
     const fd = new FormData();
     fd.append('name', JSON.stringify(form.name));
     fd.append('icon', form.icon || '☕');
@@ -426,7 +458,7 @@ function CategoriesTab({ headers }) {
     }
     const method = form.id ? 'PUT' : 'POST';
     const url = form.id ? `${API_URL}/admin/categories/${form.id}` : `${API_URL}/admin/categories`;
-    await fetch(url, { method, headers: headers(), body: fd });
+    await sendForm(url, { method, headers: headers(), body: fd, onProgress });
     setEditing(null); load();
   };
   const del = async (id) => { if (confirm(t.confirmDeleteCategory)) { await fetch(`${API_URL}/admin/categories/${id}`, { method: 'DELETE', headers: headers() }); load(); } };
@@ -457,13 +489,28 @@ function CategoryForm({ form: initial, onCancel, onSave }) {
   const { t } = useAdminLang();
   const [form, setForm] = useState({ icon_type: 'svg', icon_key: 'espresso', icon_url: '', ...initial });
   const [file, setFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const customPreview = file ? URL.createObjectURL(file) : (form.icon_url ? assetUrl(form.icon_url) : null);
 
+  const submit = async (e) => {
+    e.preventDefault();
+    if (saving) return;
+    setSaving(true); setUploadPct(0);
+    try {
+      await onSave(form, file, setUploadPct);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onCancel}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); onSave(form, file); }} className="max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-2xl bg-surface p-5">
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-2xl bg-surface p-5">
         <h3 className="font-display text-lg font-bold text-ink">{form.id ? t.editTitle : t.newTitle} · {t.categoryWord}</h3>
         <MultiLang label={t.name} value={form.name} onChange={(v) => set('name', v)} />
 
@@ -509,9 +556,10 @@ function CategoryForm({ form: initial, onCancel, onSave }) {
         </div>
 
         <Field label={t.sortOrder} type="number" value={form.sort_order} onChange={(e) => set('sort_order', e.target.value)} />
+        {saving && file && form.icon_type === 'image' && <UploadProgress pct={uploadPct} />}
         <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink">{t.cancel}</button>
-          <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink">{t.save}</button>
+          <button type="button" onClick={onCancel} disabled={saving} className="flex-1 rounded-lg border border-line py-2 text-sm text-ink disabled:opacity-50">{t.cancel}</button>
+          <button disabled={saving} className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-ink disabled:opacity-50">{saving ? t.saving : t.save}</button>
         </div>
       </form>
     </div>

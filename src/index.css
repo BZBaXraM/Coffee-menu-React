@@ -78,3 +78,50 @@ body {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ───────────────────────── Landing page (menyuqr.com/) ─────────────────────
+   Scoped helpers for src/pages/LandingPage.jsx only — the marketing page uses
+   its own emerald/amber palette instead of the café theme tokens above. */
+
+.lp-grotesk { font-family: "Space Grotesk", "Inter", system-ui, sans-serif; }
+
+/* landing section anchors sit under a sticky nav */
+#xususiyyetler, #nece-isleyir, #numuneler, #qiymet, #faq {
+  scroll-margin-top: 88px;
+}
+
+/* scroll-reveal: elements start hidden, .lp-in (added by IntersectionObserver)
+   plays them in; stagger via inline transition-delay on the element */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.lp-in { opacity: 1 !important; transform: none !important; }
+
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes lp-float-alt {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-9px) rotate(-2deg); }
+}
+@keyframes lp-blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -18px) scale(1.06); }
+  66% { transform: translate(-16px, 14px) scale(0.97); }
+}
+@keyframes lp-wave {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+.lp-float { animation: lp-float 6s ease-in-out infinite; }
+.lp-float-alt { animation: lp-float-alt 7s ease-in-out infinite; }
+.lp-blob { animation: lp-blob 14s ease-in-out infinite; }
+.lp-wave-bar { animation: lp-wave 1s ease-in-out infinite; transform-origin: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+  .lp-float, .lp-float-alt, .lp-blob, .lp-wave-bar { animation: none; }
+}

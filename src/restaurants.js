@@ -29,10 +29,22 @@ export const restaurants = [
     logo: '/driver-game-center-logo.svg',
     accentColor: '#0A84FF',
     tags: ['Oyun klubu', 'Kabinetler', 'Qelyan'],
-    // Served as its own SPA bundled under /driver-game-center/ (see nginx.conf).
-    // `href` makes the landing card a full-page navigation so nginx serves that
-    // app instead of the in-app React route.
+    // Served as its own SPA under /driver-game-center/ via Traefik. `href` makes
+    // the landing card a full-page navigation so that app is served instead of
+    // an in-app React route.
     href: '/driver-game-center/',
+  },
+  {
+    slug: 'gardenmarket',
+    name: 'GardenMarket',
+    category: 'Market kataloqu',
+    description: 'Terevez, meyve, et ve gundelik erzaq. Catdirilma ve goturme.',
+    logo: '/gardenmarket-logo.svg',
+    accentColor: '#4C9A2A',
+    tags: ['Market', 'Catdirilma', 'Teze'],
+    // Its own SPA (repo: GardenMarket-React) served under /gardenmarket/ via
+    // Traefik StripPrefix, same pattern as driver-game-center above.
+    href: '/gardenmarket/',
   },
 ];
 

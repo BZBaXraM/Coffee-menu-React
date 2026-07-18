@@ -393,7 +393,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <p data-reveal className="mb-8 text-center text-xs font-bold uppercase tracking-[0.2em] text-gray-400">MenyuQR-da işləyən bizneslər</p>
           <div data-reveal className="mb-10 flex flex-wrap items-center justify-center gap-3">
-            {[['/coffee-logo.png', 'Coffee In Lab'], ['/gardenmarket-logo.svg', 'GardenMarket'], ['/driver-game-center-logo.svg', 'Driver Game Center']].map(([src, name]) => (
+            {[['/coffee-logo.png', 'Coffee In Lab'], ['/logos/gardenmarket.svg', 'GardenMarket'], ['/logos/driver-game-center.svg', 'Driver Game Center']].map(([src, name]) => (
               <span key={name} className="flex items-center gap-2.5 rounded-full border border-gray-200 bg-[#FAFAF7] py-2 pl-2.5 pr-5 dark:border-white/10 dark:bg-[#101a15]">
                 <img src={src} alt="" className="h-8 w-8 rounded-full object-contain" loading="lazy" />
                 <span className="text-sm font-semibold">{name}</span>
@@ -534,8 +534,8 @@ export default function LandingPage() {
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           <ShowcaseCard logo="/coffee-logo.png" name="Coffee In Lab" category="Kafe" href="/coffee-in-lab" tint="linear-gradient(135deg,#9c6b3f,#5d3a1f)" rows={['70%', '52%', '62%']} />
-          <ShowcaseCard logo="/gardenmarket-logo.svg" name="GardenMarket" category="Orqanik market" href="/gardenmarket/" tint="linear-gradient(135deg,#0E9F6E,#065F46)" rows={['64%', '78%', '48%']} delay={80} />
-          <ShowcaseCard logo="/driver-game-center-logo.svg" name="Driver Game Center" category="Oyun klubu" href="/driver-game-center/" tint="linear-gradient(135deg,#1d4ed8,#0f172a)" rows={['58%', '70%', '44%']} delay={160} />
+          <ShowcaseCard logo="/logos/gardenmarket.svg" name="GardenMarket" category="Orqanik market" href="/gardenmarket/" tint="linear-gradient(135deg,#0E9F6E,#065F46)" rows={['64%', '78%', '48%']} delay={80} />
+          <ShowcaseCard logo="/logos/driver-game-center.svg" name="Driver Game Center" category="Oyun klubu" href="/driver-game-center/" tint="linear-gradient(135deg,#1d4ed8,#0f172a)" rows={['58%', '70%', '44%']} delay={160} />
         </div>
       </section>
 

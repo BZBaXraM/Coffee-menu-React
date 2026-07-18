@@ -26,7 +26,7 @@ export const restaurants = [
     name: 'Driver Game Center',
     category: 'Oyun klubu',
     description: 'Simulyasiya, yaris ve oyun klubu. Kabinetler, oyun setleri ve qelyan menyusu.',
-    logo: '/driver-game-center-logo.svg',
+    logo: '/logos/driver-game-center.svg',
     accentColor: '#0A84FF',
     tags: ['Oyun klubu', 'Kabinetler', 'Qelyan'],
     // Served as its own SPA under /driver-game-center/ via Traefik. `href` makes
@@ -39,7 +39,7 @@ export const restaurants = [
     name: 'GardenMarket',
     category: 'Market kataloqu',
     description: 'Terevez, meyve, et ve gundelik erzaq. Catdirilma ve goturme.',
-    logo: '/gardenmarket-logo.svg',
+    logo: '/logos/gardenmarket.svg',
     accentColor: '#4C9A2A',
     tags: ['Market', 'Catdirilma', 'Teze'],
     // Its own SPA (repo: GardenMarket-React) served under /gardenmarket/ via

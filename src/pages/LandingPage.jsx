@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 
 // ─── Editable business facts ────────────────────────────────────────────────
-const WHATSAPP = 'https://wa.me/994558426968?text=' +
+// Platform owner's own number — NOT a tenant's (GardenMarket etc. have their own).
+const WHATSAPP = 'https://wa.me/994708797497?text=' +
   encodeURIComponent('Salam! MenyuQR platforması haqqında məlumat almaq istəyirəm.');
 const DEMO_MAIN = '/gardenmarket/';
 const NAV_LINKS = [
